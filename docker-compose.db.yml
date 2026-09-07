@@ -1,0 +1,25 @@
+services:
+  # Central TimescaleDB database — run this ONCE on a shared server/VPS.
+  # Every ADS-B API instance (local or remote) points at this via DATABASE_URL.
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: adsb-timescaledb
+    restart: unless-stopped
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-adsb}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set a strong POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-adsb}
+      # Persist data across container restarts.
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - adsb_pgdata:/var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-adsb} -d ${POSTGRES_DB:-adsb}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  adsb_pgdata:

@@ -30,6 +30,7 @@ Key variables:
 | `RECEIVER_LAT/LON` | Receiver coordinates, used as CPR local-decode reference | `52`, `4` |
 | `AIR_STALE_MS`  | Ms of silence before an aircraft is flagged `stale`       | `15000`   |
 | `AIR_EVICT_MS`  | Ms of silence before an aircraft is dropped from the store | `60000`   |
+| `DATABASE_URL`  | PostgreSQL/TimescaleDB connection string (blank = disabled) | `postgres://...` |
 
 Run without a receiver first (this is also the default when unset):
 
@@ -163,6 +164,42 @@ Liveness + ingress/feed status.
 | `secondsSinceLastMessage` | Seconds since the last decoded message (0 = live) |
 | `connectionStatus` | Transport state: `connected`, `connecting`, etc. |
 
+### `GET /api/flights/list`
+
+List distinct aircraft seen within a time range (requires `DATABASE_URL`).
+
+| Param | Default | Description |
+| --- | --- | --- |
+| `from` | 1 hour ago | ISO 8601 start time |
+| `to` | now | ISO 8601 end time |
+| `limit` | 100 | Max rows |
+
+```json
+[
+  {
+    "icao": "89630c",
+    "first_seen": "2026-09-07T12:54:20.209Z",
+    "last_seen": "2026-09-07T13:10:42.118Z",
+    "message_count": "487"
+  }
+]
+```
+
+### `GET /api/flights/positions/:icao`
+
+Full position history for a single aircraft within a time range.
+
+| Param | Default | Description |
+| --- | --- | --- |
+| `from` | 1 hour ago | ISO 8601 start time |
+| `to` | now | ISO 8601 end time |
+
+Returns an array of position rows: `time`, `icao`, `callsign`, `latitude`, `longitude`, `altitude`, `heading`, `speed`, `vertical_rate`, `squawk`, `position_source`, `on_ground`.
+
+### `GET /api/flights/count`
+
+Total number of rows stored in `aircraft_positions`.
+
 ## WebSocket
 
 A Socket.IO server runs alongside HTTP at `/socket.io` (namespace `/`). Connect with any Socket.IO client:
@@ -247,3 +284,75 @@ Serving layer ──────────── REST (AircraftController, Hea
 ```
 
 The pipeline is decoupled through the `DataSource` interface, so swapping the ADSR-800 serial feed for a networked (TCP/UDP) receiver or the mock simulator requires no changes downstream. Position fields like `lat`/`lon` are resolved from raw CPR values by the `CprTracker` (global even/odd pairs within 10s, else local decode against the receiver position).
+
+## TimescaleDB (optional)
+
+Every aircraft state update is buffered and batch-inserted into a time-series table (`aircraft_positions`). It works with **TimescaleDB** (hypertable) or **plain PostgreSQL** (Supabase / Neon / RDS) — the app auto-detects: if the `timescaledb` extension is absent it falls back to a normal table with an index. When `DATABASE_URL` is not set, persistence is silently disabled and the API runs live-only.
+
+**Setup with Docker (TimescaleDB):**
+
+```bash
+docker run -d --name timescaledb -p 5432:5432 -e POSTGRES_PASSWORD=postgres timescale/timescaledb:latest-pg16
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/adsb
+```
+
+**Setup with hosted plain Postgres (no Docker, no install):**
+
+Create a free project at [Supabase](https://supabase.com) or [Neon](https://neon.tech), copy its connection string, and set it as `DATABASE_URL`. The table auto-creates on first boot — nothing else to configure.
+
+The `aircraft_positions` table is created automatically on first boot (hypertable when TimescaleDB is present). Rows are batch-flushed every 5 seconds or every 200 records, whichever comes first.
+
+**Query examples:**
+
+```sql
+-- All positions for an aircraft in the last hour
+SELECT * FROM aircraft_positions
+WHERE icao = '89630c' AND time > now() - interval '1 hour'
+ORDER BY time;
+
+-- Distinct aircraft seen today
+SELECT icao, MIN(time), MAX(time), COUNT(*)
+FROM aircraft_positions WHERE time > current_date
+GROUP BY icao ORDER BY 2 DESC;
+
+-- Downsample: positions per 10-minute bucket
+SELECT time_bucket('10 minutes', time) AS bucket, icao, COUNT(*)
+FROM aircraft_positions GROUP BY bucket, icao ORDER BY bucket;
+```
+
+## Docker deployment (shared central database)
+
+The recommended production topology: **one central TimescaleDB on a server**, and every ADS-B API instance (local or remote) writes to it. End users never run a database — they just point their API at the shared URL.
+
+### 1. Start the central database (once, on a server/VPS)
+
+```bash
+export POSTGRES_USER=adsb
+export POSTGRES_PASSWORD='change-me-strong-password'
+export POSTGRES_DB=adsb
+docker compose -f docker-compose.db.yml up -d
+```
+
+The inline `docker-compose.yml` is the local-dev equivalent (user `adsb`, password `postgres`, DB `adsb`).
+
+### 2. Point every API instance at it
+
+Each API host sets only the connection string to the shared DB:
+
+```dotenv
+DATABASE_URL=postgres://adsb:<password>@<server-host>:5432/adsb
+```
+
+The schema (hypertable) auto-creates on first boot — nothing else to set up per user. All users then query the same live + historical data.
+
+### 3. (Optional) Run the API itself in Docker
+
+```bash
+docker build -f Dockerfile.api -t adsb-api .
+docker run -d --name adsb-api -p 3000:3000 \
+  -e DATABASE_URL=postgres://adsb:<password>@<server-host>:5432/adsb \
+  -e TCP_HOST=192.168.0.7 -e TCP_PORT=8235 -e USE_MOCK=false \
+  adsb-api
+```
+
+Containerizing the API lets multi-user deployments share compute too; only the receiver host connects to the actual hardware.

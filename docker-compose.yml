@@ -1,0 +1,26 @@
+# Local development compose: database only.
+# Usage:  docker compose -f docker-compose.db.yml up -d
+# This runs TimescaleDB locally so the API can be developed against it.
+# For production, run the SAME database on a shared server and point each API at it.
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: adsb-timescaledb
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: adsb
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: adsb
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - adsb_pgdata:/var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U adsb -d adsb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  adsb_pgdata:
