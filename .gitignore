@@ -4,6 +4,7 @@ node_modules/
 # Build output
 dist/
 build/
+*.tsbuildinfo
 
 # Environment (never commit real config; .env.example is committed)
 .env

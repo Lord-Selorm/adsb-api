@@ -7,6 +7,7 @@ import { ModeSDecoder } from '../decode/mode-s.decoder.js';
 import { TRANSPORT_TOKEN } from './transport.token.js';
 import { SerialTransport } from './transports/serial.transport.js';
 import { MockTransport } from './transports/mock.transport.js';
+import { TcpTransport } from './transports/tcp.transport.js';
 
 @Module({
   imports: [ConfigModule, AircraftModule],
@@ -24,6 +25,10 @@ import { MockTransport } from './transports/mock.transport.js';
             aircraftCount: Number(config.get('MOCK_AIRCRAFT', '8')),
             tickMs: Number(config.get('MOCK_TICK_MS', '1000')),
           });
+        }
+        // TCP serial bridge (e.g. USR-TCP232-ED2) when a port is configured.
+        if (Number(config.get<string>('TCP_PORT', '0')) > 0) {
+          return new TcpTransport(config);
         }
         return new SerialTransport(config);
       },

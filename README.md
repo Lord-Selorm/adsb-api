@@ -18,8 +18,11 @@ Key variables:
 
 | Variable        | Purpose                                                  | Example   |
 | --------------- | -------------------------------------------------------- | --------- |
-| `USE_MOCK`      | `true` = simulated feed (no hardware), `false` = ADSR-800 serial | `true`   |
-| `SERIAL_PORT`   | COM port when `USE_MOCK=false`                           | `COM3`    |
+| `USE_MOCK`      | `true` = simulated feed (no hardware), `false` = real receiver | `true`   |
+| `TCP_HOST`      | Serial-bridge IP when `USE_MOCK=false` (USR-TCP232-ED2)  | `192.168.0.7` |
+| `TCP_PORT`      | Bridge TCP port; TCP transport is used when `> 0`        | `8235`    |
+| `TCP_RECONNECT_MS` | Reconnect delay for the TCP socket (ms)              | `1000`    |
+| `SERIAL_PORT`   | COM port when `USE_MOCK=false` and no `TCP_PORT`         | `COM3`    |
 | `SERIAL_BAUD`   | Serial baud rate for the ADSR-800                        | `460800`  |
 | `MOCK_AIRCRAFT` | How many synthetic aircraft the mock emits                | `8`       |
 | `MOCK_TICK_MS`  | Mock emission interval in ms                              | `1000`    |
@@ -34,7 +37,15 @@ Run without a receiver first (this is also the default when unset):
 USE_MOCK=true
 ```
 
-For the real ADSR-800 over serial:
+For the real ADSR-800 over a TCP serial bridge (USR-TCP232-ED2, TCP-Server mode listening on port 8235):
+
+```dotenv
+USE_MOCK=false
+TCP_HOST=192.168.0.7
+TCP_PORT=8235
+```
+
+For the real ADSR-800 directly on a COM port:
 
 ```dotenv
 USE_MOCK=false
@@ -146,7 +157,7 @@ Liveness + ingress/feed status.
 | --- | --- |
 | `status` | `"ok"` while the process is healthy |
 | `uptimeSeconds` | Process uptime in seconds |
-| `source` | Active transport: `mock` or `serial` |
+| `source` | Active transport kind: `mock`, `serial`, or `tcp` |
 | `trackedAircraft` | Number of aircraft in the store |
 | `malformedMessageCount` | Frames that failed framing/CRC validation |
 | `secondsSinceLastMessage` | Seconds since the last decoded message (0 = live) |
