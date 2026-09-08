@@ -290,6 +290,7 @@ The pipeline is decoupled through the `DataSource` interface, so swapping the AD
 The data **continuously saves** into TimescaleDB. The API reads every decoded aircraft update and writes it to a time-series table (`aircraft_positions`), so history is **never lost on refresh**. No one needs to access the database directly — they just use the API, which now returns both **realtime** and **stored** data.
 
 - Uses the official **`timescale/timescaledb`** Docker image (TimescaleDB, not plain Postgres → real hypertable).
+- DB layer uses **Drizzle ORM** (`src/timescale/schema.ts`) — typed schema, migrations via `npm run db:generate` / `npm run db:push`.
 - Runs fully **in-house** on the company's own infrastructure — no cloud.
 - `aircraft_positions` table/hypertable creates automatically on first boot; rows batch-flush every 5s or every 200 records.
 
