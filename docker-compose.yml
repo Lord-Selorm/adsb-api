@@ -1,26 +1,51 @@
-# Local development compose: database only.
-# Usage:  docker compose -f docker-compose.db.yml up -d
-# This runs TimescaleDB locally so the API can be developed against it.
-# For production, run the SAME database on a shared server and point each API at it.
+# Full in-house deployment: API + TimescaleDB together.
+# On the company server/infra:  docker compose up -d
+# The API continuously reads the ADS-B receiver and saves every update
+# into TimescaleDB (runs in its own container). Nothing is lost on refresh.
+
 services:
+  # --- TimescaleDB: official image, stores all time-series data in-house ---
   timescaledb:
     image: timescale/timescaledb:latest-pg16
     container_name: adsb-timescaledb
     restart: unless-stopped
-    ports:
-      - "5432:5432"
     environment:
-      POSTGRES_USER: adsb
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: adsb
+      POSTGRES_USER: ${POSTGRES_USER:-adsb}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set a strong POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-adsb}
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - adsb_pgdata:/var/lib/postgresql/data/pgdata
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U adsb -d adsb"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-adsb} -d ${POSTGRES_DB:-adsb}"]
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 12
+
+  # --- ADS-B API: reads receiver, decodes, saves to TimescaleDB, serves REST/WS ---
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: adsb-api
+    restart: unless-stopped
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      # Point the API at the TimescaleDB container (service name = hostname).
+      DATABASE_URL: postgres://${POSTGRES_USER:-adsb}:${POSTGRES_PASSWORD}@timescaledb:5432/${POSTGRES_DB:-adsb}
+      USE_MOCK: ${USE_MOCK:-false}
+      TCP_HOST: ${TCP_HOST:?ADSR-800/serial-bridge IP (e.g. 192.168.0.7)}
+      TCP_PORT: ${TCP_PORT:-8235}
+      RECEIVER_LAT: ${RECEIVER_LAT:-52}
+      RECEIVER_LON: ${RECEIVER_LON:-4}
+    # The API needs to reach the receiver on the LAN. If the receiver is on the
+    # host's network, allow it. Add ports for a serial device if needed.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   adsb_pgdata:
