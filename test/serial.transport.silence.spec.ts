@@ -37,10 +37,15 @@ describe('SerialTransport silence detection', () => {
   it('logs a warning after silence threshold is exceeded', async () => {
     process.env.SERIAL_SILENCE_THRESHOLD = '100'; // 100 ms
     const transport = new SerialTransport({ get: vi.fn() } as any);
-    const warnSpy = vi.spyOn((transport as any).logger, 'warn').mockImplementation(() => {});
+    const warnSpy = vi
+      .spyOn((transport as any).logger, 'warn')
+      .mockImplementation(() => {});
     await transport.connect();
     // Simulate a data event to start timer and set lastMessageAt
-    const callbacks = (SerialPort as any).mockPortCallbacks as Record<string, (...args: any[]) => void>;
+    const callbacks = (SerialPort as any).mockPortCallbacks as Record<
+      string,
+      (...args: any[]) => void
+    >;
     callbacks['data']?.(Buffer.from([0]));
     // Advance fake timers beyond threshold
     vi.advanceTimersByTime(200);

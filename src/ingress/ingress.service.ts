@@ -1,4 +1,10 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+  Inject,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AircraftStoreService } from '../aircraft/aircraft-store.service.js';
 import { ModeSDecoder } from '../decode/mode-s.decoder.js';
@@ -41,7 +47,9 @@ export class IngressService implements OnModuleInit, OnModuleDestroy {
     );
 
     this.source.onData((chunk) => this.detector?.push(chunk));
-    this.source.onError((err) => this.logger.error(`DataSource error: ${err.message}`));
+    this.source.onError((err) =>
+      this.logger.error(`DataSource error: ${err.message}`),
+    );
 
     this.logger.log(`Connecting ADS-B ingress via injected transport...`);
     this.source.connect().catch((err) => {

@@ -9,7 +9,10 @@ export interface ParsedFrame {
 }
 
 export class UnrecognizedFramingError extends Error {
-  constructor(public readonly dump: string, hint?: string) {
+  constructor(
+    public readonly dump: string,
+    hint?: string,
+  ) {
     super(
       `Unrecognized data framing. ${hint ?? ''}\n` +
         'Received bytes (first 128):\n' +

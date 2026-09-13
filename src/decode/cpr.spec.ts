@@ -7,7 +7,8 @@ const ODD = '8D40621D58C386435CC412692AD6';
 
 describe('CPR', () => {
   const decoder = new ModeSDecoder();
-  const posOf = (hex: string) => decoder.decode(Buffer.from(hex, 'hex'), 112)!.airbornePosition!;
+  const posOf = (hex: string) =>
+    decoder.decode(Buffer.from(hex, 'hex'), 112)!.airbornePosition!;
 
   describe('NL table', () => {
     it('matches the standard boundary values', () => {
@@ -84,7 +85,11 @@ describe('CPR', () => {
         1000,
       );
       expect(first).toBeNull();
-      tracker.feed({ odd: odd.odd, cprLat: odd.cprLat, cprLon: odd.cprLon }, null, 60_000);
+      tracker.feed(
+        { odd: odd.odd, cprLat: odd.cprLat, cprLon: odd.cprLon },
+        null,
+        60_000,
+      );
       // No pair and no reference -> no position.
     });
   });

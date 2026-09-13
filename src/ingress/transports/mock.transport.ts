@@ -67,17 +67,20 @@ export class MockTransport implements DataSource {
 
   async connect(): Promise<void> {
     if (this.isConnected) return;
-    this.aircraft = Array.from({ length: this.config.aircraftCount }, (_, i) => ({
-      icao: 0x4a_0000 + i + 1,
-      callsign: `NEST${String(100 + i + 1)}`,
-      bearingDeg: (i * 360) / this.config.aircraftCount,
-      radiusKm: randomBetween(15, 120),
-      trackDeg: randomBetween(0, 360),
-      altitudeFt: Math.round(randomBetween(8_000, 38_000) / 100) * 100,
-      speedKt: Math.round(randomBetween(220, 480)),
-      verticalRateFpm: randomBetween(-1600, 800),
-      ticks: 0,
-    }));
+    this.aircraft = Array.from(
+      { length: this.config.aircraftCount },
+      (_, i) => ({
+        icao: 0x4a_0000 + i + 1,
+        callsign: `NEST${String(100 + i + 1)}`,
+        bearingDeg: (i * 360) / this.config.aircraftCount,
+        radiusKm: randomBetween(15, 120),
+        trackDeg: randomBetween(0, 360),
+        altitudeFt: Math.round(randomBetween(8_000, 38_000) / 100) * 100,
+        speedKt: Math.round(randomBetween(220, 480)),
+        verticalRateFpm: randomBetween(-1600, 800),
+        ticks: 0,
+      }),
+    );
     this.isConnected = true;
     this.logger.log(
       `Mock transport online: ${this.aircraft.length} aircraft @ ${this.receiverLat},${this.receiverLon}, ${this.tickMs}ms tick`,
@@ -109,11 +112,26 @@ export class MockTransport implements DataSource {
       // Alternate even/odd CPR frames every tick; identity + velocity quieter.
       const odd = a.ticks % 2 === 1;
       lines.push(
-        toAvrLine(buildPositionFrame({ icao: a.icao, lat, lon, altitudeFt: a.altitudeFt, odd })),
+        toAvrLine(
+          buildPositionFrame({
+            icao: a.icao,
+            lat,
+            lon,
+            altitudeFt: a.altitudeFt,
+            odd,
+          }),
+        ),
       );
       if (a.ticks % 3 === 0) {
         lines.push(
-          toAvrLine(buildVelocityFrame({ icao: a.icao, speedKt: a.speedKt, trackDeg: a.trackDeg, verticalRateFpm: a.verticalRateFpm })),
+          toAvrLine(
+            buildVelocityFrame({
+              icao: a.icao,
+              speedKt: a.speedKt,
+              trackDeg: a.trackDeg,
+              verticalRateFpm: a.verticalRateFpm,
+            }),
+          ),
         );
       }
       if (a.ticks === 1 || a.ticks % 6 === 0) {
@@ -130,7 +148,8 @@ export class MockTransport implements DataSource {
     const lat = this.receiverLat + (Math.cos(rad) * a.radiusKm) / 111.32;
     const lon =
       this.receiverLon +
-      (Math.sin(rad) * a.radiusKm) / (111.32 * Math.cos((this.receiverLat * Math.PI) / 180));
+      (Math.sin(rad) * a.radiusKm) /
+        (111.32 * Math.cos((this.receiverLat * Math.PI) / 180));
     return { lat, lon };
   }
   /** Return timestamp of last emitted mock message */

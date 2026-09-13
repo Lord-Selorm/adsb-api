@@ -28,13 +28,17 @@ describe('ADS-B API (mock feed)', () => {
   });
 
   it('serves a health report', async () => {
-    const res = await request(app.getHttpServer()).get('/api/health').expect(200);
+    const res = await request(app.getHttpServer())
+      .get('/api/health')
+      .expect(200);
     expect(res.body.status).toBe('ok');
     expect(res.body.source).toBe('mock');
   });
 
   it('lists aircraft from the decoded mock feed', async () => {
-    const res = await request(app.getHttpServer()).get('/api/aircraft').expect(200);
+    const res = await request(app.getHttpServer())
+      .get('/api/aircraft')
+      .expect(200);
     expect(res.body.count).toBeGreaterThanOrEqual(1);
     const aircraft = res.body.aircraft as Array<Record<string, unknown>>;
     expect(aircraft.length).toBe(res.body.count);
@@ -48,9 +52,13 @@ describe('ADS-B API (mock feed)', () => {
   });
 
   it('serves a single aircraft by ICAO', async () => {
-    const list = await request(app.getHttpServer()).get('/api/aircraft').expect(200);
+    const list = await request(app.getHttpServer())
+      .get('/api/aircraft')
+      .expect(200);
     const icao = list.body.aircraft[0].icao as string;
-    const res = await request(app.getHttpServer()).get(`/api/aircraft/${icao}`).expect(200);
+    const res = await request(app.getHttpServer())
+      .get(`/api/aircraft/${icao}`)
+      .expect(200);
     expect(res.body.icao).toBe(icao);
     await request(app.getHttpServer()).get('/api/aircraft/ffffff').expect(404);
   });

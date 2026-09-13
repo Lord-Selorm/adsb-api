@@ -66,7 +66,7 @@ const NL_THRESHOLDS: ReadonlyArray<[number, number]> = [
   [84.89166191, 5],
   [85.75541621, 4],
   [86.53536998, 3],
-  [87.000, 2],
+  [87.0, 2],
 ];
 
 /**
@@ -77,7 +77,10 @@ export function cprNL(lat: number): number {
   const x = Math.abs(a) + (a < 0 ? 360 : 0);
   const absLat = x % 360;
   let index = 0;
-  while (index < NL_THRESHOLDS.length - 1 && absLat >= NL_THRESHOLDS[index][0]) {
+  while (
+    index < NL_THRESHOLDS.length - 1 &&
+    absLat >= NL_THRESHOLDS[index][0]
+  ) {
     index++;
   }
   return NL_THRESHOLDS[index][1];
@@ -94,8 +97,24 @@ export function cprGlobal(
   const dLatEven = 360 / 60;
   const dLatOdd = 360 / 59;
 
-  const latEven = dLatEven * (mod(Math.floor(59 * (even.cprLat / 131072) - 60 * (odd.cprLat / 131072) + 0.5), 60) + even.cprLat / 131072);
-  const latOdd = dLatOdd * (mod(Math.floor(59 * (even.cprLat / 131072) - 60 * (odd.cprLat / 131072) + 0.5), 59) + odd.cprLat / 131072);
+  const latEven =
+    dLatEven *
+    (mod(
+      Math.floor(
+        59 * (even.cprLat / 131072) - 60 * (odd.cprLat / 131072) + 0.5,
+      ),
+      60,
+    ) +
+      even.cprLat / 131072);
+  const latOdd =
+    dLatOdd *
+    (mod(
+      Math.floor(
+        59 * (even.cprLat / 131072) - 60 * (odd.cprLat / 131072) + 0.5,
+      ),
+      59,
+    ) +
+      odd.cprLat / 131072);
 
   const latE = latEven >= 270 ? latEven - 360 : latEven;
   const latO = latOdd >= 270 ? latOdd - 360 : latOdd;
@@ -108,7 +127,9 @@ export function cprGlobal(
   const m = Math.floor(
     (even.cprLon / 131072) * (nl - 1) - (odd.cprLon / 131072) * nl + 0.5,
   );
-  const lon = (360 / ni) * (mod(m, ni) + (useEvenTimestamp ? even.cprLon : odd.cprLon) / 131072);
+  const lon =
+    (360 / ni) *
+    (mod(m, ni) + (useEvenTimestamp ? even.cprLon : odd.cprLon) / 131072);
   return { lat, lon: lon > 180 ? lon - 360 : lon };
 }
 
@@ -148,7 +169,8 @@ export class CprTracker {
     ref: { lat: number; lon: number } | null,
     at: number,
   ): ResolvedPosition | null {
-    if (frame.odd) this.odd = { cprLat: frame.cprLat, cprLon: frame.cprLon, at };
+    if (frame.odd)
+      this.odd = { cprLat: frame.cprLat, cprLon: frame.cprLon, at };
     else this.even = { cprLat: frame.cprLat, cprLon: frame.cprLon, at };
 
     const other = frame.odd ? this.even : this.odd;
@@ -179,7 +201,12 @@ export class CprTracker {
     if (ref) {
       try {
         const pos = cprLocal(frame, ref.lat, ref.lon);
-        return { ...pos, source: 'local', frameParity: frame.odd ? 'odd' : 'even', at };
+        return {
+          ...pos,
+          source: 'local',
+          frameParity: frame.odd ? 'odd' : 'even',
+          at,
+        };
       } catch {
         return null;
       }

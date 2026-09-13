@@ -1,11 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AircraftStoreService } from './aircraft-store.service.js';
 import { ModeSDecoder } from '../decode/mode-s.decoder.js';
-import { buildIdentityFrame, buildPositionFrame, buildVelocityFrame } from '../ingress/transports/frame-builder.js';
+import {
+  buildIdentityFrame,
+  buildPositionFrame,
+  buildVelocityFrame,
+} from '../ingress/transports/frame-builder.js';
 
 describe('AircraftStoreService', () => {
   const decoder = new ModeSDecoder();
-  const store = (overrides: Partial<ConstructorParameters<typeof AircraftStoreService>[0]> = {}) =>
+  const store = (
+    overrides: Partial<
+      ConstructorParameters<typeof AircraftStoreService>[0]
+    > = {},
+  ) =>
     new AircraftStoreService({
       staleAfterMs: 15_000,
       evictAfterMs: 60_000,
@@ -26,12 +34,37 @@ describe('AircraftStoreService', () => {
 
     s.handle(decodeOf(buildIdentityFrame(icao, 'ABC123')));
     s.handle(
-      decodeOf(buildPositionFrame({ icao, lat: 52.26, lon: 3.94, altitudeFt: 38000, odd: false })),
+      decodeOf(
+        buildPositionFrame({
+          icao,
+          lat: 52.26,
+          lon: 3.94,
+          altitudeFt: 38000,
+          odd: false,
+        }),
+      ),
     );
     s.handle(
-      decodeOf(buildPositionFrame({ icao, lat: 52.26, lon: 3.94, altitudeFt: 38000, odd: true })),
+      decodeOf(
+        buildPositionFrame({
+          icao,
+          lat: 52.26,
+          lon: 3.94,
+          altitudeFt: 38000,
+          odd: true,
+        }),
+      ),
     );
-    s.handle(decodeOf(buildVelocityFrame({ icao, speedKt: 300, trackDeg: 90, verticalRateFpm: 640 })));
+    s.handle(
+      decodeOf(
+        buildVelocityFrame({
+          icao,
+          speedKt: 300,
+          trackDeg: 90,
+          verticalRateFpm: 640,
+        }),
+      ),
+    );
 
     const aircraft = s.get(icao.toString(16))!;
     expect(aircraft.callsign).toBe('ABC123');
@@ -47,7 +80,17 @@ describe('AircraftStoreService', () => {
 
   it('flags entries as stale after staleAfterMs', () => {
     const s = store();
-    s.handle(decodeOf(buildPositionFrame({ icao: 0x4a0001, lat: 52, lon: 4, altitudeFt: 10000, odd: false })));
+    s.handle(
+      decodeOf(
+        buildPositionFrame({
+          icao: 0x4a0001,
+          lat: 52,
+          lon: 4,
+          altitudeFt: 10000,
+          odd: false,
+        }),
+      ),
+    );
     expect(s.get('4a0001')!.stale).toBe(false);
     vi.advanceTimersByTime(20_000);
     expect(s.get('4a0001')!.stale).toBe(true);

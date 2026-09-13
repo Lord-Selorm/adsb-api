@@ -7,7 +7,9 @@ describe('ModeSDecoder malformed message handling', () => {
     const decoder = new ModeSDecoder();
     const initialCount = (decoder as any).malformedCount;
     // Spy on logger.warn
-    const loggerSpy = vi.spyOn((decoder as any).logger, 'warn').mockImplementation(() => {});
+    const loggerSpy = vi
+      .spyOn((decoder as any).logger, 'warn')
+      .mockImplementation(() => {});
     // Mock crcOk to throw error
     vi.spyOn(decoder as any, 'crcOk').mockImplementation(() => {
       throw new Error('forced crc error');

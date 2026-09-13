@@ -67,7 +67,8 @@ export class AircraftStoreService implements OnModuleDestroy {
   handle(msg: DecodedMessage): AircraftState | null {
     if (msg.df !== 17) {
       // We only track extended squitter aircraft today.
-      if (!(msg.callsign || msg.altitude !== undefined || msg.squawk)) return null;
+      if (!(msg.callsign || msg.altitude !== undefined || msg.squawk))
+        return null;
     }
     let entry = this.entries.get(msg.icao);
     if (!entry) {
@@ -143,7 +144,9 @@ export class AircraftStoreService implements OnModuleDestroy {
       if (now - entry.state.lastUpdatedAt > this.cfg.evictAfterMs) {
         this.entries.delete(icao);
         this.events.emit('remove', entry.state.icao);
-        this.logger.debug(`Evicted ${icao} (no signal for > ${this.cfg.evictAfterMs}ms)`);
+        this.logger.debug(
+          `Evicted ${icao} (no signal for > ${this.cfg.evictAfterMs}ms)`,
+        );
       }
     }
   }

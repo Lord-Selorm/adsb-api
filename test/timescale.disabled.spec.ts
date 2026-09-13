@@ -3,7 +3,10 @@ import { TimescaleService } from '../src/timescale/timescale.service.js';
 import type { AircraftState } from '../src/aircraft/aircraft-store.service.js';
 
 function makeConfig(url?: string) {
-  return { get: (key: string, def?: string) => (key === 'DATABASE_URL' ? url ?? def : def) } as never;
+  return {
+    get: (key: string, def?: string) =>
+      key === 'DATABASE_URL' ? (url ?? def) : def,
+  } as never;
 }
 
 describe('TimescaleService', () => {

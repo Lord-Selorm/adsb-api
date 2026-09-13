@@ -17,7 +17,9 @@ describe('TcpTransport', () => {
     const server = net.createServer((sock) => {
       sock.write('*8D40621D58C382D690C8AC2863A7;\r\n');
     });
-    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', () => resolve()));
+    await new Promise<void>((resolve) =>
+      server.listen(0, '127.0.0.1', () => resolve()),
+    );
     const port = (server.address() as net.AddressInfo).port;
 
     const transport = new TcpTransport(config('127.0.0.1', port));
