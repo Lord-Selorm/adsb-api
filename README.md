@@ -282,6 +282,8 @@ Three branches mirror the deployment stages:
 
 Flow: `feature/<name>` → PR into `dev` → CI runs `npm run lint && npm test` → QA verifies on the `testing` branch → PR `testing`/`dev` → `main` → deploy. Do **not** push directly to `main`.
 
+`main` is protected on both remotes (GitHub): direct pushes are blocked, every merge requires the **`Lint, build & test`** CI check to pass plus **1 approving review**, and linear history is enforced (rebase/ff-only merges). `dev` and `testing` are open.
+
 ## Architecture
 
 ```
