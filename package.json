@@ -41,6 +41,15 @@
     "tmp": "^0.2.7",
     "undici": "^8.10.2"
   },
+  "optionalDependencies": {
+    "@oxlint/binding-darwin-arm64": "^1.81.0",
+    "@oxlint/binding-darwin-x64": "^1.81.0",
+    "@oxlint/binding-linux-arm64-gnu": "^1.81.0",
+    "@oxlint/binding-linux-x64-gnu": "^1.81.0",
+    "@oxlint/binding-linux-x64-musl": "^1.81.0",
+    "@oxlint/binding-win32-arm64-msvc": "^1.81.0",
+    "@oxlint/binding-win32-x64-msvc": "^1.81.0"
+  },
   "devDependencies": {
     "@nestjs/cli": "^12.0.0",
     "@nestjs/mau": "^0.2.6",
