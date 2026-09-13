@@ -1,9 +1,10 @@
 import { Controller, Get, Inject } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AircraftStoreService } from './aircraft/aircraft-store.service.js';
-import { ModeSDecoder } from './decode/mode-s.decoder.js';
-import type { DataSource } from './ingress/data-source.interface.js';
-import { TRANSPORT_TOKEN } from './ingress/transport.token.js';
+import { AircraftStoreService } from '../aircraft/aircraft-store.service.js';
+import { ModeSDecoder } from '../decode/mode-s.decoder.js';
+import type { DataSource } from '../ingress/data-source.interface.js';
+import { TRANSPORT_TOKEN } from '../ingress/transport.token.js';
+import { HealthStatusDto } from './health.dto.js';
 
 @ApiTags('health')
 @Controller('health')
@@ -16,8 +17,8 @@ export class HealthController {
 
   @Get()
   @ApiOperation({ summary: 'Liveness + ingress/feed status' })
-  @ApiOkResponse({ description: 'Service health' })
-  status() {
+  @ApiOkResponse({ type: HealthStatusDto, description: 'Service health' })
+  status(): HealthStatusDto {
     return {
       status: 'ok',
       uptimeSeconds: process.uptime(),

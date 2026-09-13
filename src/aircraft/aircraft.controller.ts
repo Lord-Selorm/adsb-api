@@ -6,6 +6,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AircraftStoreService } from './aircraft-store.service.js';
+import { AircraftDto, AircraftListResponseDto } from './aircraft.dto.js';
 
 @ApiTags('aircraft')
 @Controller('aircraft')
@@ -14,12 +15,9 @@ export class AircraftController {
 
   @Get()
   @ApiOperation({ summary: 'Live snapshot of every tracked aircraft' })
-  @ApiOkResponse({ description: 'Live aircraft list' })
+  @ApiOkResponse({ type: AircraftListResponseDto, description: 'Live aircraft list' })
   @ApiNotFoundResponse({ description: 'No aircraft are being tracked' })
-  list(): {
-    count: number;
-    aircraft: ReturnType<AircraftStoreService['getAll']>;
-  } {
+  list(): AircraftListResponseDto {
     const aircraft = this.store.getAll();
     return { count: aircraft.length, aircraft };
   }
@@ -28,9 +26,9 @@ export class AircraftController {
   @ApiOperation({
     summary: 'Detail for a single aircraft (ICAO in lowercase hex)',
   })
-  @ApiOkResponse({ description: 'Aircraft state' })
+  @ApiOkResponse({ type: AircraftDto, description: 'Aircraft state' })
   @ApiNotFoundResponse({ description: 'Unknown ICAO address' })
-  findOne(@Param('icao') icao: string) {
+  findOne(@Param('icao') icao: string): AircraftDto {
     const aircraft = this.store.get(icao);
     if (!aircraft) {
       throw new NotFoundException(`Unknown ICAO address: ${icao}`);

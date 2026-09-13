@@ -1,24 +1,24 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { AircraftModule } from '../aircraft/aircraft.module.js';
 import { AircraftStoreService } from '../aircraft/aircraft-store.service.js';
-import { TimescaleController } from './timescale.controller.js';
-import { TimescaleService } from './timescale.service.js';
+import { FlightsController } from './flights.controller.js';
+import { FlightsService } from './flights.service.js';
 
 @Module({
   imports: [AircraftModule],
-  providers: [TimescaleService],
-  controllers: [TimescaleController],
-  exports: [TimescaleService],
+  providers: [FlightsService],
+  controllers: [FlightsController],
+  exports: [FlightsService],
 })
-export class TimescaleModule implements OnModuleInit {
+export class FlightsModule implements OnModuleInit {
   constructor(
     private readonly store: AircraftStoreService,
-    private readonly timescale: TimescaleService,
+    private readonly flights: FlightsService,
   ) {}
 
   onModuleInit(): void {
     this.store.events.on('update', (state) => {
-      this.timescale.enqueue(state);
+      this.flights.enqueue(state);
     });
   }
 }

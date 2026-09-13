@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TimescaleService } from '../src/timescale/timescale.service.js';
+import { FlightsService } from '../src/flights/flights.service.js';
 import type { AircraftState } from '../src/aircraft/aircraft-store.service.js';
 
 function makeConfig(url?: string) {
@@ -9,9 +9,9 @@ function makeConfig(url?: string) {
   } as never;
 }
 
-describe('TimescaleService', () => {
+describe('FlightsService', () => {
   it('is disabled when DATABASE_URL is not set', async () => {
-    const svc = new TimescaleService(makeConfig(undefined));
+    const svc = new FlightsService(makeConfig(undefined));
     await svc.onModuleInit();
     // No pool -> enqueue no-ops, no error.
     const state: AircraftState = {
@@ -26,7 +26,7 @@ describe('TimescaleService', () => {
   });
 
   it('normalizes an aircraft state into a buffers without a pool', () => {
-    const svc = new TimescaleService(makeConfig(undefined));
+    const svc = new FlightsService(makeConfig(undefined));
     const state: AircraftState = {
       icao: '89630c',
       callsign: 'GHF550',

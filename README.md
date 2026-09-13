@@ -315,7 +315,7 @@ AppModule ── imports ───────────────┐
    ├─ DecodeModule   (src/decode)   ├─ ModeSDecoder (shared, single instance)
    ├─ IngressModule  (src/ingress)  ├─ framing + transport factory (serial|tcp|mock)
    ├─ AircraftModule (src/aircraft) ├─ AircraftStoreService + REST + WebSocket gateway
-   └─ TimescaleModule(src/timescale)└─ TimescaleService (Drizzle) + /api/flights
+   └─ FlightsModule  (src/flights)  └─ FlightsService (Drizzle) + /api/flights
 ```
 
 Each module owns its files and exports only what consumers need; the decode layer is **not** scattered across modules anymore (`ModeSDecoder` lives in `DecodeModule` and is imported by the ingress pipeline, health checks, and tests).
@@ -325,7 +325,7 @@ Each module owns its files and exports only what consumers need; the decode laye
 The data **continuously saves** into TimescaleDB. The API reads every decoded aircraft update and writes it to a time-series table (`aircraft_positions`), so history is **never lost on refresh**. No one needs to access the database directly — they just use the API, which now returns both **realtime** and **stored** data.
 
 - Uses the official **`timescale/timescaledb`** Docker image (TimescaleDB, not plain Postgres → real hypertable).
-- DB layer uses **Drizzle ORM** (`src/timescale/schema.ts`) — typed schema, migrations via `npm run db:generate` / `npm run db:push`.
+- DB layer uses **Drizzle ORM** (`src/flights/schema.ts`) — typed schema, migrations via `npm run db:generate` / `npm run db:push`.
 - Runs fully **in-house** on the company's own infrastructure — no cloud.
 - `aircraft_positions` table/hypertable creates automatically on first boot; rows batch-flush every 5s or every 200 records.
 

@@ -70,8 +70,8 @@ export interface FlightSummaryRow {
 }
 
 @Injectable()
-export class TimescaleService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(TimescaleService.name);
+export class FlightsService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(FlightsService.name);
   private pool: Pool | null = null;
   private db: Db | null = null;
   private flushTimer: NodeJS.Timeout | null = null;
