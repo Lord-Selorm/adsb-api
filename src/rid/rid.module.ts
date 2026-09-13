@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RidMockTransport } from '../ingress/transports/rid-mock.transport.js';
+import { RidUdpTransport } from '../ingress/transports/rid-udp.transport.js';
 import { DroneRidStoreService } from './drone-rid-store.service.js';
 import { RidDecoder } from './rid.decoder.js';
 import { RidIngressService } from './rid.ingress.service.js';
@@ -36,9 +37,10 @@ import { RID_TRANSPORT_TOKEN } from './rid.transport.token.js';
             tickMs: Number(config.get('RID_MOCK_TICK_MS', '1000')),
           });
         }
-        throw new Error(
-          'No physical RID transport yet; set RID_USE_MOCK=true to run the mock feed',
-        );
+        return new RidUdpTransport({
+          host: config.get<string>('RID_UDP_HOST', '0.0.0.0'),
+          port: Number(config.get('RID_UDP_PORT', '65100')),
+        });
       },
     },
   ],

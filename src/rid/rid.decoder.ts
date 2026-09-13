@@ -4,7 +4,7 @@ import type { RidReport } from './drone-rid-store.service.js';
 /** URM-01/02 protocol frame envelope: { "frame_type": 3, "frame_info": { ... } }. */
 export interface RidFrameEnvelope {
   frame_type?: number;
-  frame_info?: Partial<RidReport>;
+  frame_info?: Partial<RidReport> & Record<string, unknown>;
 }
 
 function num(v: unknown): number | undefined {
@@ -19,10 +19,25 @@ function bool(v: unknown): boolean | undefined {
   return typeof v === 'boolean' ? v : undefined;
 }
 
+/** First present value among alias field names (Mini/Nano vs URM-02 manual). */
+function pick(
+  o: Record<string, unknown>,
+  ...keys: string[]
+): unknown {
+  for (const k of keys) {
+    if (o[k] !== undefined) return o[k];
+  }
+  return undefined;
+}
+
 /**
  * Parses URM Drone Remote ID reports (JSON lines) into DroneRidState.
  * Accepts either the protocol envelope ({ frame_type, frame_info }) or a
- * bare drone object, so the mock and future serial/TCP feeds share one parser.
+ * bare drone object, so the mock and serial/TCP/UDP feeds share one parser.
+ * Field names are read with Mini/Nano aliases first, then the URM-02 manual
+ * names (uav_sn, uav_lon, uav_lat, uav_height, uav_v_hor) so both the mock
+ * feed and the physical module decode identically. frame_type 7 device GNSS
+ * heartbeats (no serial_number) are intentionally ignored.
  */
 export class RidDecoder {
   private readonly logger = new Logger(RidDecoder.name);
@@ -39,19 +54,23 @@ export class RidDecoder {
       return null;
     }
 
-    const info = (parsed?.frame_info ?? parsed) as Partial<RidReport>;
+    const info = (parsed?.frame_info ?? parsed) as Partial<RidReport> &
+      Record<string, unknown>;
     if (!info || typeof info !== 'object') return null;
 
-    const serial = str(info.serial_number);
+    // Ignore non-drone frames such as the device GNSS heartbeat (frame_type 7).
+    if (parsed.frame_type !== undefined && parsed.frame_type !== 3) return null;
+
+    const serial = str(pick(info, 'serial_number', 'uav_sn'));
     if (!serial) return null;
 
     return {
       serial_number: serial,
-      longitude: num(info.longitude),
-      latitude: num(info.latitude),
-      height: num(info.height),
+      longitude: num(pick(info, 'longitude', 'uav_lon')),
+      latitude: num(pick(info, 'latitude', 'uav_lat')),
+      height: num(pick(info, 'height', 'uav_height')),
       altitude: num(info.altitude),
-      v_hor: num(info.v_hor),
+      v_hor: num(pick(info, 'v_hor', 'uav_v_hor')),
       v_up: num(info.v_up),
       app_lat: num(info.app_lat),
       app_lon: num(info.app_lon),

@@ -31,9 +31,10 @@ Key variables:
 | `RECEIVER_LAT/LON` | Receiver coordinates, used as CPR local-decode reference | `52`, `4` |
 | `AIR_STALE_MS`  | Ms of silence before an aircraft is flagged `stale`       | `15000`   |
 | `AIR_EVICT_MS`  | Ms of silence before an aircraft is dropped from the store | `60000`   |
-| `RID_USE_MOCK`  | `true` = simulated Drone Remote ID feed, `false` = physical URM-01/02 (not wired yet) | `true` |
+| `RID_USE_MOCK`  | `true` = simulated Drone Remote ID feed, `false` = physical URM-02 via UDP | `true` |
 | `RID_MOCK_DRONES` | How many synthetic drones the RID mock emits             | `3`       |
 | `RID_MOCK_TICK_MS` | RID mock emission interval in ms                        | `1000`    |
+| `RID_UDP_HOST` / `RID_UDP_PORT` | URM-02 UDP listen address/port (device default IP `192.168.0.3`, streams to port 65100) | `0.0.0.0` / `65100` |
 | `RID_STALE_MS` / `RID_EVICT_MS` | RID stale flag / eviction thresholds (ms) | `15000` / `60000` |
 | `DATABASE_URL`  | PostgreSQL/TimescaleDB connection string (blank = disabled) | `postgres://...` |
 
@@ -367,10 +368,10 @@ Flow: `feature/<name>` → PR into `dev` → CI runs `npm run lint && npm test` 
 ## Architecture
 
 ```
-ADSR-800 (RS232, 460800 baud)              URM-01/02 Drone RID module
-   │  DF17 extended squitter bytes            │  {"frame_type":3,"frame_info":{...}} JSON lines
+ADSR-800 (RS232, 460800 baud)              URM-02 Drone RID module (UDP 65100)
+   │  DF17 extended squitter bytes            │  {"frame_type":7|3,"frame_info":{...}} JSON lines
    ▼                                          ▼
-Ingress layer ── transport:                 RID ingress ── transport: RidMock
+Ingress layer ── transport:                 RID ingress ── transport: RidMock | RidUDP
    Serial | Mock | TCP | UDP                   (DataSource contract)
    │  raw bytes                                │  raw bytes
    ▼                                          ▼
@@ -399,7 +400,7 @@ Each sensor (ADS-B now, Drone RID now, AIS later) keeps its own transport + deco
 AppModule ── imports ───────────────────────┐
    ├─ DecodeModule   (src/decode)          ├─ ModeSDecoder (shared, single instance)
    ├─ IngressModule  (src/ingress)         ├─ ADS-B transport factory (serial|tcp|mock)
-   ├─ RidModule      (src/rid)             ├─ RID decoder + RID transport factory (mock)
+   ├─ RidModule      (src/rid)             ├─ RID decoder + RID transport factory (mock | UDP)
    ├─ AircraftModule (src/aircraft)        ├─ AircraftStoreService + REST (/api/aircraft)
    ├─ TracksModule   (src/tracks)          ├─ TrackStoreService + /api/tracks + WebSocket gateway
    └─ FlightsModule  (src/flights)         └─ FlightsService (Drizzle) + /api/flights
