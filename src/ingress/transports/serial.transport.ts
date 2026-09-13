@@ -6,6 +6,8 @@ import type { DataSource, DataSourceKind } from '../data-source.interface.js';
 export interface SerialTransportOptions {
   path: string;
   baudRate: number;
+  /** Plain-text commands sent after open (e.g. ADSR-800 `SetOutput=1`). */
+  initCommands: string[];
 }
 
 /**
@@ -49,6 +51,10 @@ export class SerialTransport implements DataSource {
         config.get<string>('SERIAL_PORT') ??
         (process.platform === 'win32' ? 'COM3' : '/dev/ttyUSB0'),
       baudRate: Number(config.get<string>('SERIAL_BAUD') ?? '460800'),
+      initCommands: (config.get<string>('SERIAL_INIT_COMMANDS', '') ?? '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
     };
   }
 
@@ -123,6 +129,20 @@ export class SerialTransport implements DataSource {
       this.isConnected = true;
       this.reconnectAttempts = 0; // reset backoff state on successful connect
       this.logger.log(`Serial connected: ${this.opts.path}`);
+      if (this.opts.initCommands.length > 0) {
+        // ADSR-800 accepts config lines (Uart_Baud=/SetOutput=) shortly
+        // after its boot banner; send them once the port is up.
+        for (const cmd of this.opts.initCommands) {
+          try {
+            await this.write(cmd + '\r\n');
+            this.logger.log(`Sent serial init command: ${cmd}`);
+          } catch (err) {
+            this.logger.error(
+              `Failed to send serial init command '${cmd}': ${(err as Error).message}`,
+            );
+          }
+        }
+      }
     } catch (err) {
       this.port = null;
       this.isConnected = false;

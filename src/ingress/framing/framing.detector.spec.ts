@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FramingDetector } from './framing.detector.js';
-import type { ParsedFrame } from './framing.types.js';
+import { UnrecognizedFramingError, type ParsedFrame } from './framing.types.js';
 
 describe('FramingDetector', () => {
   const collect = (input: Buffer | string) => {
@@ -71,16 +71,34 @@ describe('FramingDetector', () => {
     );
   });
 
-  it('raises UnrecognizedFramingError on a hopeless feed', () => {
+  it('reports UnrecognizedFramingError on a hopeless feed without throwing', () => {
     const errors: Error[] = [];
     const frames: ParsedFrame[] = [];
     const d = new FramingDetector(
       (f) => frames.push(f),
       (e) => errors.push(e),
     );
-    d.push(
-      Buffer.from('@@@@@@@@@@@@@@@@@@@@@@@@@@' + 'X'.repeat(1100), 'utf8'),
-    );
+    expect(() =>
+      d.push(Buffer.from('@'.repeat(6000), 'utf8')),
+    ).not.toThrow();
     expect(frames).toHaveLength(0);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toBeInstanceOf(UnrecognizedFramingError);
+  });
+
+  it('recovers and parses frames after a garbage feed', () => {
+    const frames: ParsedFrame[] = [];
+    const errors: Error[] = [];
+    const d = new FramingDetector(
+      (f) => frames.push(f),
+      (e) => errors.push(e),
+    );
+    d.push(Buffer.from('@'.repeat(6000), 'utf8'));
+    expect(errors.length).toBeGreaterThan(0);
+    d.push(Buffer.from('*8D40621D58C382D690C8AC2863A7;\r\n', 'utf8'));
+    expect(frames).toHaveLength(1);
+    expect(frames[0].frame.toString('hex').toUpperCase()).toBe(
+      '8D40621D58C382D690C8AC2863A7',
+    );
   });
 });

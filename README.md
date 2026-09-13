@@ -24,6 +24,7 @@ Key variables:
 | `TCP_RECONNECT_MS` | Reconnect delay for the TCP socket (ms)              | `1000`    |
 | `SERIAL_PORT`   | COM port when `USE_MOCK=false` and no `TCP_PORT`         | `COM3`    |
 | `SERIAL_BAUD`   | Serial baud rate for the ADSR-800                        | `460800`  |
+| `SERIAL_INIT_COMMANDS` | ADSR-800 config lines sent after the port opens (see below) | `SetOutput=1` |
 | `MOCK_AIRCRAFT` | How many synthetic aircraft the mock emits                | `8`       |
 | `MOCK_TICK_MS`  | Mock emission interval in ms                              | `1000`    |
 | `PORT`          | HTTP/WebSocket port                                      | `3000`    |
@@ -51,7 +52,15 @@ For the real ADSR-800 directly on a COM port:
 ```dotenv
 USE_MOCK=false
 SERIAL_PORT=COM3
+# Optional: re-affirm ADS-B output right after the port opens (the ADSR-800
+# accepts plain-text config within ~5s of its boot banner; a fresh unit may
+# boot output-disabled). Comma-separate multiple commands, or leave empty.
+SERIAL_INIT_COMMANDS=SetOutput=1
 ```
+
+> **Live-troubleshooting**: if a connected module boots output-disabled or at a
+> different baud, the framer now stays up instead of crashing — it logs an
+> `UnrecognizedFramingError`, resets, and keeps scanning for valid frames.
 
 ## Run
 

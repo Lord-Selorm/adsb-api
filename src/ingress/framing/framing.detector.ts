@@ -79,7 +79,11 @@ export class FramingDetector {
     const dump = this.buffer.subarray(0, 128).toString('hex');
     const err = new UnrecognizedFramingError(dump);
     this.onError(err);
-    throw err;
+    // Never throw: a garbage feed (wrong baud, binary interop noise) must
+    // not crash the process. Reset the detector and keep scanning.
+    this.buffer = Buffer.alloc(0);
+    this.mode = null;
+    this.unmatched = 0;
   }
 
   private consumeAvr(): boolean {
