@@ -61,6 +61,15 @@ npm run start:dev
 
 The app boots on `http://localhost:3000`, connects the ingress transport (mock or serial), and begins tracking once frames arrive.
 
+## API documentation (Swagger / OpenAPI)
+
+The REST surface is self-documenting — no more guessing from code:
+
+- **Swagger UI:** `GET /api/docs`
+- **Raw OpenAPI JSON:** `GET /api/docs-json` (import into Postman/Insomnia/OpenAPI generators)
+
+Both are generated from the controller decorators, so they always match the running code.
+
 ## REST API
 
 All routes are prefixed with `/api`.
@@ -261,6 +270,18 @@ socket.on('aircraft:remove', ({ icao }) => {
 });
 ```
 
+## Development workflow (branches)
+
+Three branches mirror the deployment stages:
+
+| Branch | Purpose | Deploy target |
+| --- | --- | --- |
+| `dev` | Integration branch; all feature branches merge here first | staging/CI |
+| `testing` | QA snapshot cut from `dev` for a verified release candidate | QA environment |
+| `main` | Production code; merge here only via PR after QA sign-off | production |
+
+Flow: `feature/<name>` → PR into `dev` → CI runs `npm run lint && npm test` → QA verifies on the `testing` branch → PR `testing`/`dev` → `main` → deploy. Do **not** push directly to `main`.
+
 ## Architecture
 
 ```
@@ -284,6 +305,18 @@ Serving layer ──────────── REST (AircraftController, Hea
 ```
 
 The pipeline is decoupled through the `DataSource` interface, so swapping the ADSR-800 serial feed for a networked (TCP/UDP) receiver or the mock simulator requires no changes downstream. Position fields like `lat`/`lon` are resolved from raw CPR values by the `CprTracker` (global even/odd pairs within 10s, else local decode against the receiver position).
+
+### Module map (NestJS)
+
+```
+AppModule ── imports ───────────────┐
+   ├─ DecodeModule   (src/decode)   ├─ ModeSDecoder (shared, single instance)
+   ├─ IngressModule  (src/ingress)  ├─ framing + transport factory (serial|tcp|mock)
+   ├─ AircraftModule (src/aircraft) ├─ AircraftStoreService + REST + WebSocket gateway
+   └─ TimescaleModule(src/timescale)└─ TimescaleService (Drizzle) + /api/flights
+```
+
+Each module owns its files and exports only what consumers need; the decode layer is **not** scattered across modules anymore (`ModeSDecoder` lives in `DecodeModule` and is imported by the ingress pipeline, health checks, and tests).
 
 ## TimescaleDB (in-house, Dockerized)
 

@@ -5,7 +5,10 @@ import {
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { Injectable } from '@nestjs/common';
-import { AircraftStoreService, AircraftState } from './aircraft-store.service.js';
+import {
+  AircraftStoreService,
+  AircraftState,
+} from './aircraft-store.service.js';
 
 /**
  * Live position + state feed. Clients connect over Socket.IO at /socket.io.

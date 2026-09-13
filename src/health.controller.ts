@@ -1,9 +1,11 @@
 import { Controller, Get, Inject } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AircraftStoreService } from './aircraft/aircraft-store.service.js';
 import { ModeSDecoder } from './decode/mode-s.decoder.js';
 import type { DataSource } from './ingress/data-source.interface.js';
 import { TRANSPORT_TOKEN } from './ingress/transport.token.js';
 
+@ApiTags('health')
 @Controller('health')
 export class HealthController {
   constructor(
@@ -13,6 +15,8 @@ export class HealthController {
   ) {}
 
   @Get()
+  @ApiOperation({ summary: 'Liveness + ingress/feed status' })
+  @ApiOkResponse({ description: 'Service health' })
   status() {
     return {
       status: 'ok',
@@ -20,7 +24,8 @@ export class HealthController {
       source: this.transport.kind,
       trackedAircraft: this.store.count,
       malformedMessageCount: this.decoder.getMalformedCount(),
-      secondsSinceLastMessage: Math.max(0, Date.now() - this.transport.getLastMessageAt()) / 1000,
+      secondsSinceLastMessage:
+        Math.max(0, Date.now() - this.transport.getLastMessageAt()) / 1000,
       connectionStatus: this.transport.getConnectionStatus(),
     };
   }

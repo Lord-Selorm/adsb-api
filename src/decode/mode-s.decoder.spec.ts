@@ -51,8 +51,12 @@ describe('ModeSDecoder', () => {
 
   describe('altitude (AC12 field)', () => {
     it('decodes the pyModeS-verified 38000 ft from the golden frames', () => {
-      expect(decoder.decode(frame(EVEN), 112)!.airbornePosition!.altitude).toBe(38000);
-      expect(decoder.decode(frame(ODD), 112)!.airbornePosition!.altitude).toBe(38000);
+      expect(decoder.decode(frame(EVEN), 112)!.airbornePosition!.altitude).toBe(
+        38000,
+      );
+      expect(decoder.decode(frame(ODD), 112)!.airbornePosition!.altitude).toBe(
+        38000,
+      );
     });
 
     it('encode -> decode round-trip', () => {

@@ -1,6 +1,22 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { and, asc, count, desc, eq, gte, lte, max, min, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gte,
+  lte,
+  max,
+  min,
+  sql,
+} from 'drizzle-orm';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import type { AircraftState } from '../aircraft/aircraft-store.service.js';
@@ -67,7 +83,9 @@ export class TimescaleService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit(): Promise<void> {
     const url = this.config.get<string>('DATABASE_URL');
     if (!url) {
-      this.logger.warn('DATABASE_URL not set — persistence disabled (live-only)');
+      this.logger.warn(
+        'DATABASE_URL not set — persistence disabled (live-only)',
+      );
       return;
     }
     const pool = new Pool({ connectionString: url, max: 5 });
@@ -81,7 +99,9 @@ export class TimescaleService implements OnModuleInit, OnModuleDestroy {
           this.logger.log('TimescaleDB hypertable ready');
         } catch {
           // timescaledb extension absent -> plain Postgres table (still time-series friendly).
-          this.logger.log('TimescaleDB extension not found — using plain Postgres table');
+          this.logger.log(
+            'TimescaleDB extension not found — using plain Postgres table',
+          );
         }
         await client.query(CREATE_INDEX_SQL);
       } finally {
@@ -92,7 +112,9 @@ export class TimescaleService implements OnModuleInit, OnModuleDestroy {
       this.enabled = true;
       this.flushTimer = setInterval(() => this.flush(), FLUSH_INTERVAL_MS);
     } catch (err) {
-      this.logger.error(`Database init failed — persistence disabled: ${(err as Error).message}`);
+      this.logger.error(
+        `Database init failed — persistence disabled: ${(err as Error).message}`,
+      );
       await pool.end().catch(() => undefined);
     }
   }
@@ -133,11 +155,17 @@ export class TimescaleService implements OnModuleInit, OnModuleDestroy {
       }));
       await this.db.insert(aircraftPositions).values(rows);
     } catch (err) {
-      this.logger.error(`Batch insert failed (${states.length} rows): ${(err as Error).message}`);
+      this.logger.error(
+        `Batch insert failed (${states.length} rows): ${(err as Error).message}`,
+      );
     }
   }
 
-  async queryPositions(icao: string, from: Date, to: Date): Promise<PositionRow[]> {
+  async queryPositions(
+    icao: string,
+    from: Date,
+    to: Date,
+  ): Promise<PositionRow[]> {
     if (!this.db) return [];
     const rows = await this.db
       .select({
@@ -155,12 +183,22 @@ export class TimescaleService implements OnModuleInit, OnModuleDestroy {
         on_ground: aircraftPositions.onGround,
       })
       .from(aircraftPositions)
-      .where(and(eq(aircraftPositions.icao, icao), gte(aircraftPositions.time, from), lte(aircraftPositions.time, to)))
+      .where(
+        and(
+          eq(aircraftPositions.icao, icao),
+          gte(aircraftPositions.time, from),
+          lte(aircraftPositions.time, to),
+        ),
+      )
       .orderBy(asc(aircraftPositions.time));
     return rows;
   }
 
-  async queryFlights(from: Date, to: Date, limit = 100): Promise<FlightSummaryRow[]> {
+  async queryFlights(
+    from: Date,
+    to: Date,
+    limit = 100,
+  ): Promise<FlightSummaryRow[]> {
     if (!this.db) return [];
     const rows = await this.db
       .select({
@@ -170,7 +208,9 @@ export class TimescaleService implements OnModuleInit, OnModuleDestroy {
         message_count: count(aircraftPositions).mapWith(Number),
       })
       .from(aircraftPositions)
-      .where(and(gte(aircraftPositions.time, from), lte(aircraftPositions.time, to)))
+      .where(
+        and(gte(aircraftPositions.time, from), lte(aircraftPositions.time, to)),
+      )
       .groupBy(aircraftPositions.icao)
       .orderBy(desc(max(aircraftPositions.time)))
       .limit(limit);

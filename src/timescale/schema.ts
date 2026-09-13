@@ -1,4 +1,12 @@
-import { index, integer, pgTable, text, timestamp, boolean, doublePrecision } from 'drizzle-orm/pg-core';
+import {
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  doublePrecision,
+} from 'drizzle-orm/pg-core';
 
 export const aircraftPositions = pgTable(
   'aircraft_positions',
@@ -16,7 +24,9 @@ export const aircraftPositions = pgTable(
     positionSource: text('position_source'),
     onGround: boolean('on_ground'),
   },
-  (table) => [index('aircraft_positions_icao_time_idx').on(table.icao, table.time.desc())],
+  (table) => [
+    index('aircraft_positions_icao_time_idx').on(table.icao, table.time.desc()),
+  ],
 );
 
 export type AircraftPositionRow = typeof aircraftPositions.$inferSelect;

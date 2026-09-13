@@ -29,16 +29,19 @@ export class SerialTransport implements DataSource {
   // Silence detection fields
   private lastMessageAt: number = Date.now();
   private silenceTimer?: NodeJS.Timeout;
-  private readonly silenceThresholdMs: number = Number(process.env.SERIAL_SILENCE_THRESHOLD ?? '90000');
+  private readonly silenceThresholdMs: number = Number(
+    process.env.SERIAL_SILENCE_THRESHOLD ?? '90000',
+  );
   // Checks for silence and logs a warning if threshold exceeded
   public checkSilence(): void {
     const now = Date.now();
     const elapsed = now - this.lastMessageAt;
     if (elapsed > this.silenceThresholdMs) {
-      this.logger.warn(`No data received from serial port for ${Math.round(elapsed / 1000)}s`);
+      this.logger.warn(
+        `No data received from serial port for ${Math.round(elapsed / 1000)}s`,
+      );
     }
   }
-
 
   constructor(config: ConfigService) {
     this.opts = {
@@ -61,7 +64,9 @@ export class SerialTransport implements DataSource {
 
   async connect(): Promise<void> {
     if (this.port) return;
-    this.logger.log(`Opening ${this.opts.path} @ ${this.opts.baudRate} baud (8N1)...`);
+    this.logger.log(
+      `Opening ${this.opts.path} @ ${this.opts.baudRate} baud (8N1)...`,
+    );
     try {
       this.port = new SerialPort({
         path: this.opts.path,
@@ -83,13 +88,18 @@ export class SerialTransport implements DataSource {
         this.lastMessageAt = Date.now();
         // Start silence detection timer if not already running
         if (!this.silenceTimer) {
-          this.silenceTimer = setInterval(() => {
-            const now = Date.now();
-            const elapsed = now - this.lastMessageAt;
-            if (elapsed > this.silenceThresholdMs) {
-              this.logger.warn(`No data received from serial port for ${Math.round(elapsed / 1000)}s`);
-            }
-          }, Math.min(this.silenceThresholdMs / 3, 30000)); // check more frequently than threshold, max 30s
+          this.silenceTimer = setInterval(
+            () => {
+              const now = Date.now();
+              const elapsed = now - this.lastMessageAt;
+              if (elapsed > this.silenceThresholdMs) {
+                this.logger.warn(
+                  `No data received from serial port for ${Math.round(elapsed / 1000)}s`,
+                );
+              }
+            },
+            Math.min(this.silenceThresholdMs / 3, 30000),
+          ); // check more frequently than threshold, max 30s
         }
         for (const cb of this.dataListeners) cb(chunk);
       });
@@ -116,7 +126,9 @@ export class SerialTransport implements DataSource {
     } catch (err) {
       this.port = null;
       this.isConnected = false;
-      this.logger.error(`Failed to open serial port: ${(err as Error).message}`);
+      this.logger.error(
+        `Failed to open serial port: ${(err as Error).message}`,
+      );
       // Propagate error to listeners and start reconnection attempts.
       this.errorListeners.forEach((cb) => cb(err as Error));
       this.handleDisconnect();

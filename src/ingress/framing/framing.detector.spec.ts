@@ -20,7 +20,9 @@ describe('FramingDetector', () => {
     expect(frames).toHaveLength(1);
     expect(frames[0].mode).toBe('avr');
     expect(frames[0].bits).toBe(112);
-    expect(frames[0].frame.toString('hex').toUpperCase()).toBe('8D40621D58C382D690C8AC2863A7');
+    expect(frames[0].frame.toString('hex').toUpperCase()).toBe(
+      '8D40621D58C382D690C8AC2863A7',
+    );
   });
 
   it('parses a 56-bit AVR line', () => {
@@ -36,7 +38,9 @@ describe('FramingDetector', () => {
   });
 
   it('parses multiple frames in one chunk', () => {
-    const { frames } = collect('*8D40621D58C382D690C8AC2863A7;\r\n*8D40621D58C386435CC412692AD6;\r\n');
+    const { frames } = collect(
+      '*8D40621D58C382D690C8AC2863A7;\r\n*8D40621D58C386435CC412692AD6;\r\n',
+    );
     expect(frames).toHaveLength(2);
   });
 
@@ -49,7 +53,9 @@ describe('FramingDetector', () => {
   });
 
   it('skips the ADSR-800 boot banner before the first frame', () => {
-    const { frames } = collect('JouleMore. Ltd Since2009 SetOutput=1 Uart_Baud=460800\n*8D40621D58C382D690C8AC2863A7;\r\n');
+    const { frames } = collect(
+      'JouleMore. Ltd Since2009 SetOutput=1 Uart_Baud=460800\n*8D40621D58C382D690C8AC2863A7;\r\n',
+    );
     expect(frames).toHaveLength(1);
   });
 
@@ -60,14 +66,21 @@ describe('FramingDetector', () => {
     expect(frames).toHaveLength(1);
     expect(frames[0].mode).toBe('beast');
     expect(frames[0].bits).toBe(112);
-    expect(frames[0].frame.toString('hex')).toBe('8d40621d58c382d690c8ac2863a7');
+    expect(frames[0].frame.toString('hex')).toBe(
+      '8d40621d58c382d690c8ac2863a7',
+    );
   });
 
   it('raises UnrecognizedFramingError on a hopeless feed', () => {
     const errors: Error[] = [];
     const frames: ParsedFrame[] = [];
-    const d = new FramingDetector((f) => frames.push(f), (e) => errors.push(e));
-    d.push(Buffer.from('@@@@@@@@@@@@@@@@@@@@@@@@@@' + 'X'.repeat(1100), 'utf8'));
+    const d = new FramingDetector(
+      (f) => frames.push(f),
+      (e) => errors.push(e),
+    );
+    d.push(
+      Buffer.from('@@@@@@@@@@@@@@@@@@@@@@@@@@' + 'X'.repeat(1100), 'utf8'),
+    );
     expect(frames).toHaveLength(0);
   });
 });

@@ -27,7 +27,9 @@ export class TcpTransport implements DataSource {
   constructor(config: ConfigService) {
     this.host = config.get<string>('TCP_HOST') ?? '192.168.0.7';
     this.port = Number(config.get<string>('TCP_PORT') ?? '8235');
-    this.reconnectDelayMs = Number(config.get<string>('TCP_RECONNECT_MS') ?? '1000');
+    this.reconnectDelayMs = Number(
+      config.get<string>('TCP_RECONNECT_MS') ?? '1000',
+    );
   }
 
   onData(listener: (chunk: Buffer) => void): void {
