@@ -3,17 +3,16 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { IngressService } from './ingress.service.js';
 import { AircraftModule } from '../aircraft/aircraft.module.js';
-import { ModeSDecoder } from '../decode/mode-s.decoder.js';
+import { DecodeModule } from '../decode/decode.module.js';
 import { TRANSPORT_TOKEN } from './transport.token.js';
 import { SerialTransport } from './transports/serial.transport.js';
 import { MockTransport } from './transports/mock.transport.js';
 import { TcpTransport } from './transports/tcp.transport.js';
 
 @Module({
-  imports: [ConfigModule, AircraftModule],
+  imports: [ConfigModule, AircraftModule, DecodeModule],
   providers: [
     IngressService,
-    ModeSDecoder,
     {
       provide: TRANSPORT_TOKEN,
       useFactory: (config: ConfigService) => {
@@ -35,6 +34,6 @@ import { TcpTransport } from './transports/tcp.transport.js';
       inject: [ConfigService],
     },
   ],
-  exports: [IngressService, TRANSPORT_TOKEN, ModeSDecoder],
+  exports: [IngressService, TRANSPORT_TOKEN],
 })
 export class IngressModule {}

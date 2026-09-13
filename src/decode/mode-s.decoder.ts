@@ -1,24 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BufferReader } from './buffer-reader.js';
-
-/** 24-bit parity table for Mode S messages (dump1090 / pyModeS algorithm,
- *  polynomial 0xFF409). Entry j is the parity contribution of bit j. */
-const CHECKSUM_TABLE: readonly number[] = [
-  0x3935ea, 0x1c9af5, 0xf1b77e, 0x78dbbf, 0xc397db, 0x9e31e9, 0xb0e2f0, 0x587178,
-  0x2c38bc, 0x161c5e, 0x0b0e2f, 0xfa7d13, 0x82c48d, 0xbe9842, 0x5f4c21, 0xd05c14,
-  0x682e0a, 0x341705, 0xe5f186, 0x72f8c3, 0xc68665, 0x9cb936, 0x4e5c9b, 0xd8d449,
-  0x939020, 0x49c810, 0x24e408, 0x127204, 0x093902, 0x049c81, 0xfdb444, 0x7eda22,
-  0x3f6d11, 0xe04c8c, 0x702646, 0x381323, 0xe3f395, 0x8e03ce, 0x4701e7, 0xdc7af7,
-  0x91c77f, 0xb719bb, 0xa476d9, 0xadc168, 0x56e0b4, 0x2b705a, 0x15b82d, 0xf52612,
-  0x7a9309, 0xc2b380, 0x6159c0, 0x30ace0, 0x185670, 0x0c2b38, 0x06159c, 0x030ace,
-  0x018567, 0xff38b7, 0x80665f, 0xbfc92b, 0xa01e91, 0xaff54c, 0x57faa6, 0x2bfd53,
-  0xea04ad, 0x8af852, 0x457c29, 0xdd4410, 0x6ea208, 0x375104, 0x1ba882, 0x0dd441,
-  0xf91024, 0x7c8812, 0x3e4409, 0xe0d800, 0x706c00, 0x383600, 0x1c1b00, 0x0e0d80,
-  0x0706c0, 0x038360, 0x01c1b0, 0x00e0d8, 0x00706c, 0x003836, 0x001c1b, 0xfff409,
-  0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000,
-  0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000,
-  0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000, 0x000000,
-];
+import { CHECKSUM_TABLE } from './checksum.js';
 
 export type ModeSMessage = Buffer & { __msgbits: 56 | 112 };
 
@@ -41,7 +23,7 @@ export interface DecodedMessage {
   velocity?: {
     speed: number;
     heading: number;
-      speedType: 'AS' | 'GS' | 'GT';
+    speedType: 'AS' | 'GS' | 'GT';
     verticalRate: number;
     vertRateSource: 'GNSS' | 'BARO';
   };
@@ -76,7 +58,11 @@ export class ModeSDecoder {
    * 56-bit (DF0/4/5/11/16/20/21). For 56-bit messages the caller provides a
    * 14-byte buffer with the 7 payload bytes right-aligned at [7..14).
    */
-  decode(frame: Buffer, msgbits: 56 | 112 = 112, receivedAt = Date.now()): DecodedMessage | null {
+  decode(
+    frame: Buffer,
+    msgbits: 56 | 112 = 112,
+    receivedAt = Date.now(),
+  ): DecodedMessage | null {
     if (frame.length !== 14) return null;
     try {
       const base = msgbits === 56 ? 56 : 0;
@@ -89,7 +75,10 @@ export class ModeSDecoder {
         df,
         icao,
         crcOk,
-        rawHex: msgbits === 56 ? frame.subarray(7).toString('hex') : frame.toString('hex'),
+        rawHex:
+          msgbits === 56
+            ? frame.subarray(7).toString('hex')
+            : frame.toString('hex'),
         bits: msgbits,
         receivedAt,
       };
@@ -110,11 +99,26 @@ export class ModeSDecoder {
             }
           }
           if (df === 4 || df === 5 || df === 20 || df === 21) {
-            const a = ((frame[3] & 0x80) >> 5) | (frame[2] & 0x02) | ((frame[2] & 0x08) >> 3);
-            const b = ((frame[3] & 0x02) << 1) | ((frame[3] & 0x08) >> 2) | ((frame[3] & 0x20) >> 5);
-            const c = ((frame[2] & 0x01) << 2) | ((frame[2] & 0x04) >> 1) | ((frame[2] & 0x10) >> 4);
-            const d = ((frame[3] & 0x01) << 2) | ((frame[3] & 0x04) >> 1) | ((frame[3] & 0x10) >> 4);
-            out.squawk = String(a * 1000 + b * 100 + c * 10 + d).padStart(4, '0');
+            const a =
+              ((frame[3] & 0x80) >> 5) |
+              (frame[2] & 0x02) |
+              ((frame[2] & 0x08) >> 3);
+            const b =
+              ((frame[3] & 0x02) << 1) |
+              ((frame[3] & 0x08) >> 2) |
+              ((frame[3] & 0x20) >> 5);
+            const c =
+              ((frame[2] & 0x01) << 2) |
+              ((frame[2] & 0x04) >> 1) |
+              ((frame[2] & 0x10) >> 4);
+            const d =
+              ((frame[3] & 0x01) << 2) |
+              ((frame[3] & 0x04) >> 1) |
+              ((frame[3] & 0x10) >> 4);
+            out.squawk = String(a * 1000 + b * 100 + c * 10 + d).padStart(
+              4,
+              '0',
+            );
           }
         }
         return out;
@@ -169,10 +173,7 @@ export class ModeSDecoder {
 
   crcOk(frame: Uint8Array, msgbits: 56 | 112 = 112): boolean {
     const crc = this.crc24(frame, msgbits);
-    const stored =
-      msgbits === 56
-        ? (frame[11] << 16) | (frame[12] << 8) | frame[13]
-        : (frame[11] << 16) | (frame[12] << 8) | frame[13];
+    const stored = (frame[11] << 16) | (frame[12] << 8) | frame[13];
     return crc === stored;
   }
 
@@ -199,7 +200,11 @@ export class ModeSDecoder {
       cprLat: r.readBits(54, 17),
       cprLon: r.readBits(71, 17),
       ...(qBit
-        ? { altitude: Math.round(((r.readBits(40, 7) << 4) | r.readBits(48, 4)) * 25) - 1000 }
+        ? {
+            altitude:
+              Math.round(((r.readBits(40, 7) << 4) | r.readBits(48, 4)) * 25) -
+              1000,
+          }
         : {}),
     };
   }
@@ -245,7 +250,8 @@ export class ModeSDecoder {
       speedType = mebit(24, 1) === 0 ? 'AS' : 'GT';
     }
 
-    const vertRateSource: 'GNSS' | 'BARO' = mebit(35, 1) === 0 ? 'GNSS' : 'BARO';
+    const vertRateSource: 'GNSS' | 'BARO' =
+      mebit(35, 1) === 0 ? 'GNSS' : 'BARO';
     const vrSign = mebit(36, 1) === 1 ? -1 : 1;
     const vr = mebit(37, 9);
     const verticalRate = vr === 0 ? 0 : Math.trunc(vrSign * (vr - 1) * 64);
