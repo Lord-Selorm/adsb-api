@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { DataSourceKind } from '../ingress/data-source.interface.js';
 
 export class HealthStatusDto {
@@ -14,7 +14,9 @@ export class HealthStatusDto {
   })
   source: DataSourceKind;
 
-  @ApiProperty({ description: 'Number of aircraft currently tracked in memory' })
+  @ApiProperty({
+    description: 'Number of aircraft currently tracked in memory',
+  })
   trackedAircraft: number;
 
   @ApiProperty({
@@ -27,4 +29,22 @@ export class HealthStatusDto {
 
   @ApiProperty({ description: 'Transport connection status' })
   connectionStatus: string;
+
+  @ApiPropertyOptional({
+    description: 'Drone Remote ID ingress transport kind',
+  })
+  ridSource?: DataSourceKind;
+
+  @ApiPropertyOptional({ description: 'Drone Remote ID connection status' })
+  ridConnectionStatus?: string;
+
+  @ApiPropertyOptional({
+    description: 'Seconds since the last Drone Remote ID message',
+  })
+  ridSecondsSinceLastMessage?: number;
+
+  @ApiPropertyOptional({
+    description: 'Number of drones currently tracked in memory',
+  })
+  trackedDrones?: number;
 }

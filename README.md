@@ -31,6 +31,10 @@ Key variables:
 | `RECEIVER_LAT/LON` | Receiver coordinates, used as CPR local-decode reference | `52`, `4` |
 | `AIR_STALE_MS`  | Ms of silence before an aircraft is flagged `stale`       | `15000`   |
 | `AIR_EVICT_MS`  | Ms of silence before an aircraft is dropped from the store | `60000`   |
+| `RID_USE_MOCK`  | `true` = simulated Drone Remote ID feed, `false` = physical URM-01/02 (not wired yet) | `true` |
+| `RID_MOCK_DRONES` | How many synthetic drones the RID mock emits             | `3`       |
+| `RID_MOCK_TICK_MS` | RID mock emission interval in ms                        | `1000`    |
+| `RID_STALE_MS` / `RID_EVICT_MS` | RID stale flag / eviction thresholds (ms) | `15000` / `60000` |
 | `DATABASE_URL`  | PostgreSQL/TimescaleDB connection string (blank = disabled) | `postgres://...` |
 
 Run without a receiver first (this is also the default when unset):
@@ -83,7 +87,71 @@ Both are generated from the controller decorators, so they always match the runn
 
 All routes are prefixed with `/api`.
 
+### `GET /api/tracks`
+
+**Recommended.** Live snapshot of every tracked object across **all sensor sources** — ADS-B aircraft and Drone Remote ID (URM-01/02). Each entry is tagged with its `source`.
+
+| Query param | Description |
+| --- | --- |
+| `?source=adsb` | ADS-B aircraft only |
+| `?source=drone_rid` | Drones only |
+| *(omitted)* | Combined, both sources |
+
+```json
+{
+  "count": 2,
+  "tracks": [
+    {
+      "source": "adsb",
+      "id": "4a0001",
+      "icao": "4a0001",
+      "callsign": "NEST101",
+      "altitude": 9125,
+      "lat": 51.467,
+      "lon": 4.241,
+      "speed": 395,
+      "heading": 135.2,
+      "verticalRate": 832,
+      "positionSource": "global",
+      "firstSeenAt": 1788624809850,
+      "lastUpdatedAt": 1788644197433,
+      "stale": false
+    },
+    {
+      "source": "drone_rid",
+      "id": "A1B2C3D4",
+      "serial_number": "A1B2C3D4",
+      "latitude": 51.4472,
+      "longitude": 7.2665,
+      "lat": 51.4472,
+      "lon": 7.2665,
+      "height": 12.4,
+      "altitude": 140.2,
+      "v_hor": 8.1,
+      "v_up": 0.2,
+      "app_lat": 51.4,
+      "app_lon": 7.25,
+      "app_alt": 98,
+      "app_type": 1,
+      "uav_type": "DJI Mini4Pro",
+      "reg_code": "A1B2C3D4",
+      "angle": 92,
+      "status": 2,
+      "sys_type": 1,
+      "weight": 1,
+      "firstSeenAt": 1788644200000,
+      "lastUpdatedAt": 1788644210000,
+      "stale": false
+    }
+  ]
+}
+```
+
+`400 Bad Request` when `source` is not `adsb` or `drone_rid`.
+
 ### `GET /api/aircraft`
+
+> **Deprecated** — kept for backward compatibility. Use `GET /api/tracks?source=adsb`; the payload shape is identical.
 
 Live snapshot of every tracked aircraft.
 
@@ -127,6 +195,8 @@ Returns `404 Not Found` with `{"message":"Unknown ICAO address: <icao>","error":
 
 ### `GET /api/aircraft/:icao`
 
+> **Deprecated** — kept for backward compatibility. Use `GET /api/tracks` (ADS-B tracks expose the same `icao` field).
+
 Detail for a single aircraft (ICAO in lowercase hex).
 
 ```json
@@ -168,7 +238,11 @@ Liveness + ingress/feed status.
   "trackedAircraft": 8,
   "malformedMessageCount": 0,
   "secondsSinceLastMessage": 0,
-  "connectionStatus": "connected"
+  "connectionStatus": "connected",
+  "ridSource": "rid_mock",
+  "ridConnectionStatus": "connected",
+  "ridSecondsSinceLastMessage": 0,
+  "trackedDrones": 3
 }
 ```
 
@@ -176,11 +250,15 @@ Liveness + ingress/feed status.
 | --- | --- |
 | `status` | `"ok"` while the process is healthy |
 | `uptimeSeconds` | Process uptime in seconds |
-| `source` | Active transport kind: `mock`, `serial`, or `tcp` |
+| `source` | Active ADS-B transport kind: `mock`, `serial`, or `tcp` |
 | `trackedAircraft` | Number of aircraft in the store |
 | `malformedMessageCount` | Frames that failed framing/CRC validation |
-| `secondsSinceLastMessage` | Seconds since the last decoded message (0 = live) |
-| `connectionStatus` | Transport state: `connected`, `connecting`, etc. |
+| `secondsSinceLastMessage` | Seconds since the last decoded ADS-B message (0 = live) |
+| `connectionStatus` | ADS-B transport state: `connected`, `connecting`, etc. |
+| `ridSource` | Drone Remote ID transport kind: `rid_mock` |
+| `ridConnectionStatus` | RID transport state |
+| `ridSecondsSinceLastMessage` | Seconds since the last RID report (0 = live) |
+| `trackedDrones` | Number of drones in the RID store |
 
 ### `GET /api/flights/list`
 
@@ -225,57 +303,49 @@ A Socket.IO server runs alongside HTTP at `/socket.io` (namespace `/`). Connect 
 ```js
 import { io } from 'socket.io-client';
 
+// All sources:
 const socket = io('http://localhost:3000');
+// Only drones (or `?source=adsb` for aircraft):
+const droneSocket = io('http://localhost:3000?source=drone_rid');
 ```
 
-### `aircraft:list` (client → server)
+The `?source=` connect query joins a per-source room: clients get only that source's `track:update`/`track:remove` events.
 
-Request the current full snapshot; the server replies with the same payload shape as `GET /api/aircraft`.
+### `track:list` (client → server)
+
+Request the current full snapshot — same payload shape as `GET /api/tracks`, optionally filtered.
 
 ```js
-socket.emit('aircraft:list', (res) => {
-  console.log(res.count, res.aircraft);
+socket.emit('track:list', { source: 'drone_rid' }, (res) => {
+  console.log(res.count, res.tracks);
 });
 ```
 
-Response:
-
-```json
-{
-  "count": 8,
-  "aircraft": [
-    {
-      "icao": "4a0001",
-      "callsign": "NEST101",
-      "altitude": 9125,
-      "lat": 51.467362743313025,
-      "lon": 4.241485595703125,
-      "speed": 395,
-      "heading": 135.20462691396588,
-      "verticalRate": 832,
-      "positionSource": "global",
-      "firstSeenAt": 1788624809850,
-      "lastUpdatedAt": 1788644197433,
-      "stale": false
-    }
-  ]
-}
-```
+Legacy `aircraft:list` (ADS-B snapshot, same payload as `GET /api/aircraft`) still works.
 
 ### Server → client events
 
 | Event | Payload | When |
 | --- | --- | --- |
-| `aircraft:update` | `AircraftState` object | Any decoded message mutates an aircraft's state (position, altitude, speed, callsign, …) |
-| `aircraft:remove` | `{ "icao": "4a0001", "at": 1788644257433 }` | An aircraft is evicted after `AIR_EVICT_MS` of silence |
+| `track:update` | source-tagged track object | Any decoded message mutates a track (ADS-B aircraft **or** Drone Remote ID) |
+| `track:remove` | `{ "source": "...", "id": "...", "at": 1788644257433 }` | A track is evicted after its source's `EVICT_MS` of silence |
+| `aircraft:update` | `AircraftState` object | *(legacy)* ADS-B-only broadcast of `track:update` |
+| `aircraft:remove` | `{ "icao": "4a0001", "at": 1788644257433 }` | *(legacy)* ADS-B eviction |
 
 ```js
-socket.on('aircraft:update', (ac) => {
-  // {icao: "4a0001", lat: ..., lon: ..., altitude: ..., ...}
+socket.on('track:update', (t) => {
+  // t.source: "adsb" | "drone_rid"
+  // adsb: {icao, callsign, lat, lon, altitude, ...}
+  // drone_rid: {serial_number, latitude, longitude, height, v_hor, uav_type, ...}
 });
 
-socket.on('aircraft:remove', ({ icao }) => {
-  console.log('Gone:', icao);
+socket.on('track:remove', ({ source, id }) => {
+  console.log('Gone:', source, id);
+});
+
+// legacy alias for ADS-B only
+socket.on('aircraft:update', (ac) => {
+  // {icao: "4a0001", lat: ..., lon: ..., altitude: ..., ...}
 });
 ```
 
@@ -296,38 +366,45 @@ Flow: `feature/<name>` → PR into `dev` → CI runs `npm run lint && npm test` 
 ## Architecture
 
 ```
-ADSR-800 (RS232, 460800 baud)
-   │  DF17 extended squitter bytes
+ADSR-800 (RS232, 460800 baud)              URM-01/02 Drone RID module
+   │  DF17 extended squitter bytes            │  {"frame_type":3,"frame_info":{...}} JSON lines
+   ▼                                          ▼
+Ingress layer ── transport:                 RID ingress ── transport: RidMock
+   Serial | Mock | TCP | UDP                   (DataSource contract)
+   │  raw bytes                                │  raw bytes
+   ▼                                          ▼
+FramingDetector ── Beast / AVR / raw hex      RidDecoder ── JSON line -> DroneRidState
+   │  frames (14-byte / 7-byte)                │
+   ▼                                          ▼
+ModeSDecoder ── CRC24, DF/ICAO,              DroneRidStoreService ── per-serial Map
+   AC12 altitude, velocity, callsign          (60s eviction, 15s stale, events)
+   │  DecodedMessage{...}                      │
+   ▼                                          │
+AircraftStoreService ── per-ICAO CprTracker ──┤
+   (60s eviction, 15s stale, events)          │
+   ▼                                          ▼
+TrackStoreService ─── merges both sources, tags each track with `source`
+   │
    ▼
-Ingress layer ── transport: Serial │ Mock │ TCP │ UDP (DataSource contract)
-   │  raw bytes
-   ▼
-FramingDetector ── auto-detects Beast binary / AVR ASCII / raw hex
-   │  frames (14-byte / 7-byte)
-   ▼
-ModeSDecoder ── CRC24, DF/ICAO, AC12 altitude (Q-bit), velocity, callsign
-   │  DecodedMessage{ airbornePosition{ cprLat, cprLon, odd }, ... }
-   ▼
-AircraftStoreService ── per-ICAO CprTracker (CPR global+local), in-memory Map
-   │  60s eviction, 15s stale flag, EventEmitter('update'|'remove')
-   ▼
-Serving layer ──────────── REST (AircraftController, HealthController)
-                        └─ WebSocket (AircraftGateway → Socket.IO)
+Serving layer ────── REST (TracksController, AircraftController, HealthController)
+                  └─ WebSocket (TracksGateway → Socket.IO)
 ```
 
-The pipeline is decoupled through the `DataSource` interface, so swapping the ADSR-800 serial feed for a networked (TCP/UDP) receiver or the mock simulator requires no changes downstream. Position fields like `lat`/`lon` are resolved from raw CPR values by the `CprTracker` (global even/odd pairs within 10s, else local decode against the receiver position).
+Each sensor (ADS-B now, Drone RID now, AIS later) keeps its own transport + decode + store behind the `DataSource` contract; `TrackStoreService` is the single merged view the API and WebSocket layer read from.
 
 ### Module map (NestJS)
 
 ```
-AppModule ── imports ───────────────┐
-   ├─ DecodeModule   (src/decode)   ├─ ModeSDecoder (shared, single instance)
-   ├─ IngressModule  (src/ingress)  ├─ framing + transport factory (serial|tcp|mock)
-   ├─ AircraftModule (src/aircraft) ├─ AircraftStoreService + REST + WebSocket gateway
-   └─ FlightsModule  (src/flights)  └─ FlightsService (Drizzle) + /api/flights
+AppModule ── imports ───────────────────────┐
+   ├─ DecodeModule   (src/decode)          ├─ ModeSDecoder (shared, single instance)
+   ├─ IngressModule  (src/ingress)         ├─ ADS-B transport factory (serial|tcp|mock)
+   ├─ RidModule      (src/rid)             ├─ RID decoder + RID transport factory (mock)
+   ├─ AircraftModule (src/aircraft)        ├─ AircraftStoreService + REST (/api/aircraft)
+   ├─ TracksModule   (src/tracks)          ├─ TrackStoreService + /api/tracks + WebSocket gateway
+   └─ FlightsModule  (src/flights)         └─ FlightsService (Drizzle) + /api/flights
 ```
 
-Each module owns its files and exports only what consumers need; the decode layer is **not** scattered across modules anymore (`ModeSDecoder` lives in `DecodeModule` and is imported by the ingress pipeline, health checks, and tests).
+Each module owns its files and exports only what consumers need; the decode layer is **not** scattered across modules anymore (`ModeSDecoder` lives in `DecodeModule` and is imported by the ingress pipeline, health checks, and tests). Folders mirror the API surface: `/api/aircraft` → `src/aircraft`, `/api/tracks` → `src/tracks`, Drone Remote ID ingestion → `src/rid`.
 
 ## TimescaleDB (in-house, Dockerized)
 

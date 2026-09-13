@@ -62,4 +62,21 @@ describe('ADS-B API (mock feed)', () => {
     expect(res.body.icao).toBe(icao);
     await request(app.getHttpServer()).get('/api/aircraft/ffffff').expect(404);
   });
+
+  it('serves a combined /api/tracks view and reports drone health', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/tracks')
+      .expect(200);
+    expect(Array.isArray(res.body.tracks)).toBe(true);
+    const sources = new Set<string>(
+      res.body.tracks.map((t: { source: string }) => t.source),
+    );
+    expect(sources.has('adsb')).toBe(true);
+
+    const health = await request(app.getHttpServer())
+      .get('/api/health')
+      .expect(200);
+    expect(health.body.ridSource).toBe('rid_mock');
+    expect(typeof health.body.trackedDrones).toBe('number');
+  });
 });

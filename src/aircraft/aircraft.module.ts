@@ -1,14 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AircraftController } from './aircraft.controller.js';
-import { AircraftGateway } from './aircraft.gateway.js';
 import { AircraftStoreService } from './aircraft-store.service.js';
 
 @Module({
   imports: [ConfigModule],
   controllers: [AircraftController],
   providers: [
-    AircraftGateway,
     {
       provide: AircraftStoreService,
       inject: [ConfigService],
@@ -22,6 +20,6 @@ import { AircraftStoreService } from './aircraft-store.service.js';
         }),
     },
   ],
-  exports: [AircraftStoreService, AircraftGateway],
+  exports: [AircraftStoreService],
 })
 export class AircraftModule {}

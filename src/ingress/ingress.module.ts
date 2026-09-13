@@ -2,15 +2,15 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { IngressService } from './ingress.service.js';
-import { AircraftModule } from '../aircraft/aircraft.module.js';
 import { DecodeModule } from '../decode/decode.module.js';
+import { TracksModule } from '../tracks/tracks.module.js';
 import { TRANSPORT_TOKEN } from './transport.token.js';
 import { SerialTransport } from './transports/serial.transport.js';
 import { MockTransport } from './transports/mock.transport.js';
 import { TcpTransport } from './transports/tcp.transport.js';
 
 @Module({
-  imports: [ConfigModule, AircraftModule, DecodeModule],
+  imports: [ConfigModule, TracksModule, DecodeModule],
   providers: [
     IngressService,
     {

@@ -6,16 +6,16 @@ import {
   Inject,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AircraftStoreService } from '../aircraft/aircraft-store.service.js';
 import { ModeSDecoder } from '../decode/mode-s.decoder.js';
 import type { ParsedFrame } from './framing/framing.types.js';
 import { FramingDetector } from './framing/framing.detector.js';
 import type { DataSource } from './data-source.interface.js';
 import { TRANSPORT_TOKEN } from './transport.token.js';
+import { TrackStoreService } from '../tracks/track-store.service.js';
 
 /**
  * Ingress pipeline: DataSource bytes -> FramingDetector -> ModeSDecoder ->
- * AircraftStore. Transport selection is decided by the `USE_MOCK` flag in
+ * TrackStore. Transport selection is decided by the `USE_MOCK` flag in
  * IngressModule (`true` = mock simulator, `false` = real ADSR-800 serial;
  * TCP/UDP are future slots behind the same DataSource contract).
  */
@@ -27,7 +27,7 @@ export class IngressService implements OnModuleInit, OnModuleDestroy {
   constructor(
     @Inject(TRANSPORT_TOKEN) private readonly source: DataSource,
     private readonly config: ConfigService,
-    private readonly store: AircraftStoreService,
+    private readonly store: TrackStoreService,
     private readonly decoder: ModeSDecoder,
   ) {}
 
@@ -70,6 +70,6 @@ export class IngressService implements OnModuleInit, OnModuleDestroy {
       this.logger.debug(`Dropping bad CRC for ${msg.icao}`);
       return;
     }
-    this.store.handle(msg);
+    this.store.handleAircraft(msg);
   }
 }

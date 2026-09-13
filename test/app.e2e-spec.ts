@@ -35,6 +35,30 @@ describe('App (e2e)', () => {
     expect(typeof res.body.count).toBe('number');
   });
 
+  it('/api/tracks (GET) returns a combined snapshot with source tags', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/tracks')
+      .expect(200);
+    expect(Array.isArray(res.body.tracks)).toBe(true);
+    expect(typeof res.body.count).toBe('number');
+    for (const t of res.body.tracks) {
+      expect(['adsb', 'drone_rid']).toContain(t.source);
+    }
+  });
+
+  it('/api/tracks?source=drone_rid (GET) filters by source', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/tracks?source=drone_rid')
+      .expect(200);
+    for (const t of res.body.tracks) {
+      expect(t.source).toBe('drone_rid');
+    }
+  });
+
+  it('/api/tracks?source=ais (GET) rejects unknown sources', async () => {
+    await request(app.getHttpServer()).get('/api/tracks?source=ais').expect(400);
+  });
+
   afterEach(async () => {
     await app.close();
   });
