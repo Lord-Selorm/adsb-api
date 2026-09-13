@@ -138,6 +138,11 @@ export class TrackDto {
     description: '0 micro, 1 light, 2 small, 3 medium, 4 large, 255 unknown',
   })
   weight?: number;
+
+  @ApiPropertyOptional({
+    description: 'Drone Remote ID whitelist match (URM-01/02: always false)',
+  })
+  has_allowlist?: boolean;
 }
 
 export class TracksListResponseDto {

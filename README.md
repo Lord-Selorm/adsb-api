@@ -139,6 +139,7 @@ All routes are prefixed with `/api`.
       "status": 2,
       "sys_type": 1,
       "weight": 1,
+      "has_allowlist": false,
       "firstSeenAt": 1788644200000,
       "lastUpdatedAt": 1788644210000,
       "stale": false

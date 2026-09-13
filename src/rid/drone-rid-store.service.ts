@@ -20,6 +20,8 @@ export interface DroneRidState {
   status?: number;
   sys_type?: number;
   weight?: number;
+  /** Whitelist match; URM-01/02 always reports false. */
+  has_allowlist?: boolean;
   firstSeenAt: number;
   lastUpdatedAt: number;
   /** True when no messages for > staleAfterMs (still visible, flagged). */
@@ -92,6 +94,7 @@ export class DroneRidStoreService implements OnModuleDestroy {
     if (drone.status !== undefined) state.status = drone.status;
     if (drone.sys_type !== undefined) state.sys_type = drone.sys_type;
     if (drone.weight !== undefined) state.weight = drone.weight;
+    if (drone.has_allowlist !== undefined) state.has_allowlist = drone.has_allowlist;
 
     state.lastUpdatedAt = now;
     this.events.emit('update', state);

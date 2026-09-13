@@ -25,6 +25,7 @@ describe('RidDecoder', () => {
         status: 2,
         sys_type: 1,
         weight: 1,
+        has_allowlist: false,
       },
     });
 
@@ -37,6 +38,7 @@ describe('RidDecoder', () => {
     expect(d!.uav_type).toBe('DJI Mini4Pro');
     expect(d!.status).toBe(2);
     expect(d!.app_type).toBe(1);
+    expect(d!.has_allowlist).toBe(false);
   });
 
   it('accepts a bare drone object without the protocol wrapper', () => {

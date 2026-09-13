@@ -120,6 +120,7 @@ export class RidMockTransport implements DataSource {
             status: 2,
             sys_type: 1,
             weight: 1,
+            has_allowlist: false,
           },
         }) + '\n',
       );

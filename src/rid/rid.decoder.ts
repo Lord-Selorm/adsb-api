@@ -15,6 +15,10 @@ function str(v: unknown): string | undefined {
   return typeof v === 'string' && v.length > 0 ? v : undefined;
 }
 
+function bool(v: unknown): boolean | undefined {
+  return typeof v === 'boolean' ? v : undefined;
+}
+
 /**
  * Parses URM Drone Remote ID reports (JSON lines) into DroneRidState.
  * Accepts either the protocol envelope ({ frame_type, frame_info }) or a
@@ -59,6 +63,7 @@ export class RidDecoder {
       status: num(info.status),
       sys_type: num(info.sys_type),
       weight: num(info.weight),
+      has_allowlist: bool(info.has_allowlist),
     };
   }
 }
