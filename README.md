@@ -2,6 +2,43 @@
 
 Internal API for live flight tracking data from an **ADSR-800 Mode-S/ADS-B receiver** (connected via RS232 serial at 460800 baud). The service ingests raw DF17 Extended Squitter frames, decodes Mode S/ADS-B messages (position via CPR, altitude, velocity, callsign), maintains a per-aircraft in-memory track, and exposes the live picture over **REST** and **WebSocket** — a FlightRadar24-style backend for a single receiver. A `mock` transport simulates the receiver, so the entire pipeline (decode → track → API) runs with zero hardware.
 
+## Quick start
+
+From this directory (Node 18+, `npm install` already done):
+
+```powershell
+npm run build          # compile once (or after any code change)
+npm run start:prod     # start the API
+```
+
+That boots the service on `http://localhost:3000` using **simulated feeds only** (mock ADS-B aircraft + mock drones) — zero hardware required, ideal for a first spin or CI.
+
+To connect the **physical URM-02 Drone RID module** as well, set one variable before starting (Windows PowerShell):
+
+```powershell
+$env:RID_USE_MOCK = 'false'
+npm run start:prod
+```
+
+`RID_UDP_HOST` / `RID_UDP_PORT` already default to `0.0.0.0:65100` (the URM-02's default IP/port), so nothing else needs setting. The ADS-B feed can stay mocked or go real via `USE_MOCK=false` (see **Setup** below).
+
+### Confirm it's alive
+
+```powershell
+Invoke-RestMethod http://localhost:3000/api/health
+```
+
+Expect `status: ok`, `connectionStatus: connected` (ADS-B) and — with the URM-02 attached — `ridSource: rid_udp`, `ridConnectionStatus: connected`, with `ridSecondsSinceLastMessage` near `0` (heartbeats arriving from the module).
+
+### Common issues
+
+| Symptom | Cause / fix |
+| --- | --- |
+| `EADDRINUSE ... port: 3000` on start | Another API instance is already running — stop it (`Ctrl+C`, or `Stop-Process -Id <pid> -Force`) |
+| `ridConnectionStatus: disconnected` / no drones | The URM-02's UDP stream isn't reaching the API — make sure **no other tool** is listening on UDP `65100` (a raw UDP listener or Wireshark capture on that port steals the packets) |
+| `ridSecondsSinceLastMessage` keeps growing | Device not talking — check the URM-02 is powered and reachable at its default IP `192.168.0.3` |
+| URM-02 heartbeats show `longitude:0, latitude:0` + `1970` clock | GPS/GNSS fix not acquired — put the module + GNSS antenna near a window/outdoors and wait 1–3 min (detection still works without a fix) |
+
 ## Setup
 
 ```bash
@@ -69,11 +106,23 @@ SERIAL_INIT_COMMANDS=SetOutput=1
 
 ## Run
 
+Development mode (auto-reloads on file changes):
+
 ```bash
 npm run start:dev
 ```
 
-The app boots on `http://localhost:3000`, connects the ingress transport (mock or serial), and begins tracking once frames arrive.
+Production build (compiled, no watch):
+
+```bash
+npm run build
+npm run start:prod
+```
+
+Both boot on `http://localhost:3000` and begin tracking once frames arrive. For real hardware, set the environment variable **before** starting:
+
+- **URM-02 Drone RID over UDP:** `$env:RID_USE_MOCK = 'false'`
+- **ADSR-800 receiver (serial or TCP bridge):** `USE_MOCK=false` + `SERIAL_PORT`/`TCP_HOST` — see Setup above.
 
 ## API documentation (Swagger / OpenAPI)
 
