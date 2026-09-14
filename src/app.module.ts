@@ -6,6 +6,7 @@ import { FlightsModule } from './flights/flights.module.js';
 import { HealthModule } from './health/health.module.js';
 import { IngressModule } from './ingress/ingress.module.js';
 import { RidModule } from './rid/rid.module.js';
+import { AisModule } from './ais/ais.module.js';
 import { TracksModule } from './tracks/tracks.module.js';
 
 @Module({
@@ -16,6 +17,7 @@ import { TracksModule } from './tracks/tracks.module.js';
     AircraftModule,
     TracksModule,
     RidModule,
+    AisModule,
     FlightsModule,
     HealthModule,
   ],

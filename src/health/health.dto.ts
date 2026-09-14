@@ -9,8 +9,20 @@ export class HealthStatusDto {
   uptimeSeconds: number;
 
   @ApiProperty({
-    description: 'Active ingress transport',
-    enum: ['serial', 'mock', 'tcp', 'udp'],
+    description: 'Active ADS-B ingress transport',
+    enum: [
+      'serial',
+      'mock',
+      'tcp',
+      'udp',
+      'rid_mock',
+      'rid_udp',
+      'rid_serial',
+      'rid_dual',
+      'ais_mock',
+      'ais_serial',
+      'ais_tcp',
+    ],
   })
   source: DataSourceKind;
 
@@ -47,4 +59,22 @@ export class HealthStatusDto {
     description: 'Number of drones currently tracked in memory',
   })
   trackedDrones?: number;
+
+  @ApiPropertyOptional({
+    description: 'AIS maritime ingress transport kind',
+  })
+  aisSource?: DataSourceKind;
+
+  @ApiPropertyOptional({ description: 'AIS connection status' })
+  aisConnectionStatus?: string;
+
+  @ApiPropertyOptional({
+    description: 'Seconds since the last AIS message',
+  })
+  aisSecondsSinceLastMessage?: number;
+
+  @ApiPropertyOptional({
+    description: 'Number of maritime vessels currently tracked in memory',
+  })
+  trackedVessels?: number;
 }

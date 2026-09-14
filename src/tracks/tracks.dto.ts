@@ -9,13 +9,13 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class TrackDto {
   @ApiProperty({
     description: 'Sensor source of this track',
-    enum: ['adsb', 'drone_rid'],
+    enum: ['adsb', 'drone_rid', 'ais'],
     example: 'drone_rid',
   })
-  source: 'adsb' | 'drone_rid';
+  source: 'adsb' | 'drone_rid' | 'ais';
 
   @ApiProperty({
-    description: 'adsb: lowercase ICAO hex; drone_rid: serial number',
+    description: 'adsb: lowercase ICAO hex; drone_rid: serial number; ais: MMSI',
     example: 'A1B2C3D4',
   })
   id: string;
@@ -143,6 +143,43 @@ export class TrackDto {
     description: 'Drone Remote ID whitelist match (URM-01/02: always false)',
   })
   has_allowlist?: boolean;
+
+  // --- AIS Maritime Vessel fields ---
+  @ApiPropertyOptional({ description: '9-digit Maritime Mobile Service Identity (MMSI)' })
+  mmsi?: string;
+
+  @ApiPropertyOptional({ description: 'Vessel name' })
+  name?: string;
+
+  @ApiPropertyOptional({ description: 'Numeric AIS ship type code' })
+  shipType?: number;
+
+  @ApiPropertyOptional({ description: 'Ship type description (Cargo, Tanker, etc.)' })
+  shipTypeDescription?: string;
+
+  @ApiPropertyOptional({ description: 'Speed Over Ground (knots)' })
+  sog?: number;
+
+  @ApiPropertyOptional({ description: 'Course Over Ground (deg)' })
+  cog?: number;
+
+  @ApiPropertyOptional({ description: 'Navigational status code' })
+  navStatus?: number;
+
+  @ApiPropertyOptional({ description: 'Navigational status description' })
+  navStatusDescription?: string;
+
+  @ApiPropertyOptional({ description: 'Destination port' })
+  destination?: string;
+
+  @ApiPropertyOptional({ description: 'Maximum static draught (m)' })
+  draft?: number;
+
+  @ApiPropertyOptional({ description: 'Vessel length (m)' })
+  length?: number;
+
+  @ApiPropertyOptional({ description: 'Vessel width (m)' })
+  width?: number;
 }
 
 export class TracksListResponseDto {

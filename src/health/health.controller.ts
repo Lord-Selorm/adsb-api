@@ -1,9 +1,10 @@
-import { Controller, Get, Inject } from '@nestjs/common';
+import { Controller, Get, Inject, Optional } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ModeSDecoder } from '../decode/mode-s.decoder.js';
 import type { DataSource } from '../common/data-source.interface.js';
 import { TRANSPORT_TOKEN } from '../ingress/transport.token.js';
 import { RID_TRANSPORT_TOKEN } from '../rid/rid.transport.token.js';
+import { AIS_TRANSPORT_TOKEN } from '../ais/ais.transport.token.js';
 import { TrackStoreService } from '../tracks/track-store.service.js';
 import { HealthStatusDto } from './health.dto.js';
 
@@ -15,6 +16,9 @@ export class HealthController {
     private readonly decoder: ModeSDecoder,
     @Inject(TRANSPORT_TOKEN) private readonly transport: DataSource,
     @Inject(RID_TRANSPORT_TOKEN) private readonly ridTransport: DataSource,
+    @Optional()
+    @Inject(AIS_TRANSPORT_TOKEN)
+    private readonly aisTransport?: DataSource,
   ) {}
 
   @Get()
@@ -35,6 +39,12 @@ export class HealthController {
       ridSecondsSinceLastMessage:
         Math.max(0, Date.now() - this.ridTransport.getLastMessageAt()) / 1000,
       trackedDrones: this.tracks.countDrones,
+      aisSource: this.aisTransport?.kind,
+      aisConnectionStatus: this.aisTransport?.getConnectionStatus(),
+      aisSecondsSinceLastMessage: this.aisTransport
+        ? Math.max(0, Date.now() - this.aisTransport.getLastMessageAt()) / 1000
+        : undefined,
+      trackedVessels: this.tracks.countVessels,
     };
   }
 }

@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RidMockTransport } from './transports/rid-mock.transport.js';
 import { RidUdpTransport } from './transports/rid-udp.transport.js';
+import { RidSerialTransport } from './transports/rid-serial.transport.js';
+import { RidDualTransport } from './transports/rid-dual.transport.js';
 import { DroneRidStoreService } from './drone-rid-store.service.js';
 import { RidDecoder } from './rid.decoder.js';
 import { RidIngressService } from './rid.ingress.service.js';
@@ -37,10 +39,32 @@ import { RID_TRANSPORT_TOKEN } from './rid.transport.token.js';
             tickMs: Number(config.get('RID_MOCK_TICK_MS', '1000')),
           });
         }
-        return new RidUdpTransport({
-          host: config.get<string>('RID_UDP_HOST', '0.0.0.0'),
-          port: Number(config.get('RID_UDP_PORT', '65100')),
-        });
+
+        const transportMode = config
+          .get<string>('RID_TRANSPORT', 'dual')
+          .toLowerCase();
+
+        const createUdp = () =>
+          new RidUdpTransport({
+            host: config.get<string>('RID_UDP_HOST', '0.0.0.0'),
+            port: Number(config.get('RID_UDP_PORT', '65100')),
+          });
+
+        const createSerial = () =>
+          new RidSerialTransport({
+            path:
+              config.get<string>('RID_SERIAL_PORT') ??
+              (process.platform === 'win32' ? 'COM5' : '/dev/ttyUSB0'),
+            baudRate: Number(config.get('RID_SERIAL_BAUD', '115200')),
+          });
+
+        if (transportMode === 'udp') {
+          return createUdp();
+        }
+        if (transportMode === 'serial') {
+          return createSerial();
+        }
+        return new RidDualTransport(createUdp(), createSerial());
       },
     },
   ],

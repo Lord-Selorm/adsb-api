@@ -42,7 +42,7 @@ describe('App (e2e)', () => {
     expect(Array.isArray(res.body.tracks)).toBe(true);
     expect(typeof res.body.count).toBe('number');
     for (const t of res.body.tracks) {
-      expect(['adsb', 'drone_rid']).toContain(t.source);
+      expect(['adsb', 'drone_rid', 'ais']).toContain(t.source);
     }
   });
 
@@ -55,8 +55,19 @@ describe('App (e2e)', () => {
     }
   });
 
-  it('/api/tracks?source=ais (GET) rejects unknown sources', async () => {
-    await request(app.getHttpServer()).get('/api/tracks?source=ais').expect(400);
+  it('/api/tracks?source=ais (GET) filters by source', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/tracks?source=ais')
+      .expect(200);
+    for (const t of res.body.tracks) {
+      expect(t.source).toBe('ais');
+    }
+  });
+
+  it('/api/tracks?source=unknown (GET) rejects unknown sources', async () => {
+    await request(app.getHttpServer())
+      .get('/api/tracks?source=unknown')
+      .expect(400);
   });
 
   afterEach(async () => {

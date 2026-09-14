@@ -9,6 +9,7 @@ describe('ADS-B API (mock feed)', () => {
 
   beforeAll(async () => {
     process.env.USE_MOCK = 'true';
+    process.env.RID_USE_MOCK = 'true';
     process.env.MOCK_AIRCRAFT = '3';
     process.env.MOCK_TICK_MS = '200';
     process.env.RECEIVER_LAT = '52';
@@ -25,6 +26,10 @@ describe('ADS-B API (mock feed)', () => {
 
   afterAll(async () => {
     await app.close();
+    delete process.env.USE_MOCK;
+    delete process.env.RID_USE_MOCK;
+    delete process.env.MOCK_AIRCRAFT;
+    delete process.env.MOCK_TICK_MS;
   });
 
   it('serves a health report', async () => {

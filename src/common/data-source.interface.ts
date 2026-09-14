@@ -4,7 +4,12 @@ export type DataSourceKind =
   | 'tcp'
   | 'udp'
   | 'rid_mock'
-  | 'rid_udp';
+  | 'rid_udp'
+  | 'rid_serial'
+  | 'rid_dual'
+  | 'ais_mock'
+  | 'ais_serial'
+  | 'ais_tcp';
 
 /**
  * Abstraction over a raw byte feed from an ADS-B receiver.

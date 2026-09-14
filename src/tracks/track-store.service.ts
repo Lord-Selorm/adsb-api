@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, Optional } from '@nestjs/common';
 import { EventEmitter } from 'node:events';
 import {
   AircraftStoreService,
@@ -10,13 +10,15 @@ import {
   DroneRidState,
   type RidReport,
 } from '../rid/drone-rid-store.service.js';
+import { VesselStoreService } from '../ais/vessel-store.service.js';
+import type { DecodedAisMessage, VesselState } from '../ais/ais.types.js';
 
-export type TrackSource = 'adsb' | 'drone_rid';
+export type TrackSource = 'adsb' | 'drone_rid' | 'ais';
 
 /** Unified tracked object: common fields for every sensor source. */
 export interface Track {
   source: TrackSource;
-  /** adsb: lowercase ICAO hex; drone_rid: serial_number. */
+  /** adsb: lowercase ICAO hex; drone_rid: serial_number; ais: MMSI. */
   id: string;
   firstSeenAt: number;
   lastUpdatedAt: number;
@@ -27,10 +29,10 @@ export interface Track {
 }
 
 /**
- * Single in-memory view over every sensor source. ADS-B and Drone RID stores
- * stay owned by their own modules; this service merges them behind one
- * interface (get/watchers) and rebroadcasts both stores' events with the
- * source attached, so REST + WebSocket consumers see one timeline.
+ * Single in-memory view over every sensor source. ADS-B, Drone RID, and AIS
+ * stores stay owned by their own modules; this service merges them behind one
+ * interface (get/watchers) and rebroadcasts all stores' events with the
+ * source attached, so REST + WebSocket consumers see one unified picture.
  */
 @Injectable()
 export class TrackStoreService implements OnModuleDestroy {
@@ -39,6 +41,7 @@ export class TrackStoreService implements OnModuleDestroy {
   constructor(
     private readonly adsb: AircraftStoreService,
     private readonly drone: DroneRidStoreService,
+    @Optional() private readonly vessels?: VesselStoreService,
   ) {
     this.adsb.events.on('update', (s: AircraftState) =>
       this.events.emit('update', this.adsbTrack(s)),
@@ -52,6 +55,14 @@ export class TrackStoreService implements OnModuleDestroy {
     this.drone.events.on('remove', (id: string) =>
       this.events.emit('remove', { source: 'drone_rid', id, at: Date.now() }),
     );
+    if (this.vessels) {
+      this.vessels.events.on('update', (v: VesselState) =>
+        this.events.emit('update', this.vesselTrack(v)),
+      );
+      this.vessels.events.on('remove', (mmsi: string) =>
+        this.events.emit('remove', { source: 'ais', id: mmsi, at: Date.now() }),
+      );
+    }
   }
 
   onModuleDestroy(): void {
@@ -68,6 +79,11 @@ export class TrackStoreService implements OnModuleDestroy {
     return this.drone.handle(drone);
   }
 
+  /** Feed a decoded AIS report into the vessel store. */
+  handleVessel(report: DecodedAisMessage): VesselState | null {
+    return this.vessels?.handle(report) ?? null;
+  }
+
   getAll(source?: TrackSource): Track[] {
     const tracks: Track[] = [];
     if (!source || source === 'adsb') {
@@ -75,6 +91,9 @@ export class TrackStoreService implements OnModuleDestroy {
     }
     if (!source || source === 'drone_rid') {
       tracks.push(...this.drone.getAll().map((d) => this.droneTrack(d)));
+    }
+    if ((!source || source === 'ais') && this.vessels) {
+      tracks.push(...this.vessels.getAll().map((v) => this.vesselTrack(v)));
     }
     return tracks;
   }
@@ -84,8 +103,15 @@ export class TrackStoreService implements OnModuleDestroy {
       const state = this.adsb.get(id);
       return state ? this.adsbTrack(state) : null;
     }
-    const state = this.drone.get(id);
-    return state ? this.droneTrack(state) : null;
+    if (source === 'drone_rid') {
+      const state = this.drone.get(id);
+      return state ? this.droneTrack(state) : null;
+    }
+    if (source === 'ais' && this.vessels) {
+      const state = this.vessels.get(id);
+      return state ? this.vesselTrack(state) : null;
+    }
+    return null;
   }
 
   get countAircraft(): number {
@@ -94,6 +120,10 @@ export class TrackStoreService implements OnModuleDestroy {
 
   get countDrones(): number {
     return this.drone.count;
+  }
+
+  get countVessels(): number {
+    return this.vessels?.count ?? 0;
   }
 
   private adsbTrack(s: AircraftState): Track {
@@ -107,6 +137,16 @@ export class TrackStoreService implements OnModuleDestroy {
       id: d.serial_number,
       lat: d.latitude,
       lon: d.longitude,
+    };
+  }
+
+  private vesselTrack(v: VesselState): Track {
+    return {
+      ...v,
+      source: 'ais',
+      id: v.mmsi,
+      lat: v.latitude,
+      lon: v.longitude,
     };
   }
 }

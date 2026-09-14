@@ -1,0 +1,1 @@
+export const AIS_TRANSPORT_TOKEN = Symbol('AIS_TRANSPORT_TOKEN');

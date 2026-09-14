@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { DecodeModule } from '../decode/decode.module.js';
 import { IngressModule } from '../ingress/ingress.module.js';
 import { RidModule } from '../rid/rid.module.js';
+import { AisModule } from '../ais/ais.module.js';
 import { TracksModule } from '../tracks/tracks.module.js';
 import { HealthController } from './health.controller.js';
 
@@ -11,7 +12,7 @@ import { HealthController } from './health.controller.js';
  * Own module keeps AppModule a pure assembly point.
  */
 @Module({
-  imports: [DecodeModule, IngressModule, RidModule, TracksModule],
+  imports: [DecodeModule, IngressModule, RidModule, AisModule, TracksModule],
   controllers: [HealthController],
 })
 export class HealthModule {}

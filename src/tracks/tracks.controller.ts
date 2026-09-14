@@ -17,12 +17,12 @@ export class TracksController {
   @Get()
   @ApiOperation({
     summary:
-      'Live snapshot across all sensor sources (ADS-B + Drone Remote ID)',
+      'Live snapshot across all sensor sources (ADS-B + Drone Remote ID + AIS)',
   })
   @ApiQuery({
     name: 'source',
     required: false,
-    enum: ['adsb', 'drone_rid'],
+    enum: ['adsb', 'drone_rid', 'ais'],
     description: 'Filter to a single source',
   })
   @ApiOkResponse({
@@ -37,7 +37,8 @@ export class TracksController {
 
   private parseSource(source?: string): TrackSource | undefined {
     if (source === undefined || source === '') return undefined;
-    if (source === 'adsb' || source === 'drone_rid') return source;
+    if (source === 'adsb' || source === 'drone_rid' || source === 'ais')
+      return source;
     throw new BadRequestException(`Unknown source: ${source}`);
   }
 }
