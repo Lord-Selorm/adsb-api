@@ -1,0 +1,99 @@
+I.ProductDescription
+ThisproductisagroundreceivingdeviceintegratedwithAISradio
+receptionfunction,suitablefornavigationsafety,situationawareness
+andotherscenarios.Theproducthasthecharacteristicsofhigh
+sensitivity,lowdelayandhighreliability,compactstructure,suitablefor
+deploymentinavarietyofcomplexenvironments.
+II.IntroductionofSomeFunctions
+ofAIS
+TheAIS112E-AisanAISreceiverequippedwithdualindependent
+demodulationhardware.Utilizingsecond-orderfrequencyconversion
+technology,thisdeviceboastsexceptionalsensitivity.Multiplenarrow-
+bandfiltersareemployedatthesignalinputstagetofilteroutmost
+extraneousnoiseintheenvironment,therebyachievingsuperiorsignal-
+to-noiseratio.ThePCBboardismeticulouslydesignedtominimize
+backgroundnoise.Comparedwithotherreceiversfromourcompany,
+thismodeldemonstratessuperiorperformancebycapturingextremely
+faintAISsignalsunderidenticalconditions,deliveringenhanced
+receptioncapabilities.
+Thereceivercanoperatesimultaneouslyat161.975MHzand
+162.025MHzfrequencies.UponreceivingAISradiofrequencysignals,
+thereceiverwillautomaticallydemodulatethem.The4Gwireless
+communicationandRJ45interfaceofthereceiverwillsynchronously
+outputthesuccessfullydemodulatedAISmessages.
+
+PlantParameter：
+Table1.BasicParameters
+Parameter* Minimum TypicalCase Maximum Unit
+Modulation
+mode GMSK
+Airspeed 9600 bps
+Reception
+frequency161.975 & 162.025 MHz
+Channel
+bandwidth25 kHz
+Dopplerfrequency
+deviationStudent4 kHz
+Reception
+sensitivity20%bit
+errorrate- -112 dBm
+Acceptance
+dynamicrange-127 -20 dBm
+Antenna
+impedance50 Ω
+*Note:Theaboveparametersaremeasuredatroomtemperature25℃.
+1:Otherreceivingfrequenciescanbecustomizedaccordingtouserrequirements.
+Table2.LimitParameters
+Parameter NumericValue Unit
+Maximuminputpowerof
+RFsignal-20 dBm
+*Note:Exceedingtheaboveparametersmaycausepermanentdamagetothe
+equipment
+III.InterfacesandCommunication
+Modes
+3.1CI：
+1.1RJ45networkinterface
+2.1×4Gantennainterface(for4Gonly)
+3.1antennainterface(AISdedicatedantenna)
+3.2.Datatransmissionmode:
+1.Supports4GwirelessdatatransferorwiredEthernet
+2.ThedataissenttotheuserspecifiedserverthroughTCP/IPor
+UDPprotocol
+3.Supportsbuilt-inwebinterfacemanagementforeasy
+parameterconfigurationandstatusmonitoring
+IV.PhysicalParameters
+1.Powerconsumption:<20W
+2.Powersupply:12Vor48VDCorstandardPOEprotocol
+3.Antennatype:omnidirectionalantenna
+4.Equipmentsize:212*212*55mm(withoutantenna)
+5.Weight:1.4kg
+6.Workingtemperature:-15~+55°C
+7.Storagetemperature:-25~+70°C
+8.Protectionclass:IP68
+V.AntennaGain
+AIS：3dBi
+VI.NormalDetectionRange
+AIS:radius10-100km
+Theactualdetectionrangeislimitedbyelectromagnetic
+environment,installationheight,obstacles(suchasbuildings),antenna
+installationAngleandotherfactors.
+VII.InstallationSuggestions
+1.Poleinstallation:
+●Usethesupportingrodbrackettofixitonthepoleorwall
+●Thesixantennasarecorrectlyconnectedtothe
+designatedinterfaceofthehousing
+2.Highlyrecommended:
+●Recommendedinstallationheightis2m~40m
+●Thehighertheinstallationheight,thelargerthedetection
+rangeandthesmallertheblindarea
+3.Anglerequirements:
+●Theequipmentmustbeinstalledvertically,andtiltingorlaying
+flatisprohibited to ensure the normaloperation ofthe
+omnidirectionalantenna
+4.Lightningprotectionandgrounding:
+●Wheninstalledoutdoors,ensurethattheequipmentislocated
+inthelightningprotectionareaandwellgrounded
+5.Obstructionprecautions:
+●Concreteshieldingcanleadtoreduceddetection
+6.Installationguidepicturesandaccessories
+

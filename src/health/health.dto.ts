@@ -22,6 +22,7 @@ export class HealthStatusDto {
       'ais_mock',
       'ais_serial',
       'ais_tcp',
+      'ais_udp',
     ],
   })
   source: DataSourceKind;

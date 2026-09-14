@@ -1,0 +1,65 @@
+
+
+Product Description
+This product is a ground receiving equipment with integrated   ADS-B radio receiving function, suitable for air monitoring, situation awareness and  other  scenarios.  The   product   has  the   characteristics  of   high sensitivity, low delay and high reliability, compact structure, suitable for deployment in a variety of complex environments.
+
+
+Ⅰ.Introduction  of  ADS-B Module Functions
+Direct radio receiving technology is adopted.
+The receiver is mainly composed of multiple narrowband filters and low noise amplifiers to improve the receiving performance. The receiver uses  a  high-speed  and  high-dynamic  logarithmic  detector  for  the detection part, and the decoding part uses hardware circuit to directly decode.
+The DSP at the back end performs CRC24 verification on the BPPM and  signal,  and  synchronously  outputs the  successfully  demodulated ADS-B message through 4G wireless communication and RJ45 interface, with excellent receiving sensitivity.
+
+
+Plant Parameter ：
+
+Table 1. Basic Parameters
+* Note: The above parameters are measured at 25℃ temperature
+
+Table 2. Limit Parameters
+*Note:  Exceeding  the  above  parameters  may  cause  permanent  damage  to  the equipment
+
+Ⅱ. Interface    and    Communication Mode
+Communication Interfaces:
+ 1 x RJ45 network interface
+ 1 x 4G antenna interface (for 4G only)
+ 1 x antenna interface (ADS-B dedicated antenna)
+
+Data transmission mode:
+Supports 4G wireless data transmission or wired Ethernet
+The data is sent to the user-specified server through TCP/IP or UDP protocol
+Supports  built-in  Web  interface  management  for  easy  parameter configuration and status monitoring
+
+
+IV. Physical Parameters
+Power consumption: <20W
+Power supply: 12V or 48V DC or standard POE protocol
+Antenna type: omnidirectional antenna
+Device size: 212*212*55mm (without antenna)
+Weight: 1.4kg
+Working temperature: -30 °C ~ +85 °C
+Storage temperature: -45 °C ~ +85 °C
+Protection class: IP68
+
+Ⅴ. Antenna Gain
+ADS-B：6dBi
+
+
+Ⅵ.Normal Detection Range
+ADS-B: Radius 30-300 km
+The actual detection range is limited by electromagnetic environment, installation  height,  obstacles  (such  as  buildings),  antenna  installation Angle and other factors.
+
+
+Ⅶ. Installation Suggestions
+Pole installation:
+●Use the supporting pole bracket to fix on the upright or wall
+●The six antenna are correctly connected to the designated interface of the housing
+Highly recommended:
+●It is recommended to install the height of 2 ~ 40m
+●The higher the installation height, the larger the detection range and the smaller the blind area
+Angle requirements:
+●The  equipment  must  be  installed  vertically,  not  tilted  or  flat,  to ensure the normal operation of the omnidirectional antenna
+Lightning protection and grounding:
+●When installed outside, ensure that the equipment is located in the lightning protection area and well grounded
+Watch out for obstructions
+●Concrete shielding will lead to reduced detection effect
+Provide installation guide pictures and accessories

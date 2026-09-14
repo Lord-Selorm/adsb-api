@@ -1,0 +1,984 @@
+   
+  
+ 
+ 
+  
+ 
+  
+ 
+  
+ 
+ 
+ 
+  
+ 
+  
+St. Lawrence Seaway AIS Data Messaging 
+Formats and Specifications 
+ 
+Harmonized with U.S. Coast Guard PAWSS  
+AIS Messages  
+ 
+ 
+Revision 4.0A 
+  
+May 9, 2002  
+ 
+ 
+ 
+  
+ 
+Developed for the: 
+Saint Lawrence Seaway Development Corporation  
+Saint Lawrence Seaway Management Corporation 
+ 
+ 
+By: U.S. Department of Transportation 
+John A. Volpe Transportation Systems Center 
+55 Broadway 
+Cambridge, MA 02142 
+   
+  
+ 
+Revision History 
+ 
+Document Version Description 
+1.0 (all versions) Internal draft, Not publicly released  
+2.0 (all versions) Internal draft, Not publicly released  
+3.0 (all versions) Initial draft re lease, Seaway specific messages 
+4.0 (April 25, 2002) Revised all messages to  harmonize with USCG PAWSS AIS messages 
+4.0A (May 9, 2002) Corrections: 
+Page 6, changed text to read “If there is more than six station readings,...
+Section 7, Page 15, Main table - corrected bit count on table  
+Section 7.2, Page 16, Example – corrected Function ID in example 
+Section 8.1, Page 18, Example – Corrected Function ID in Example 
+Section 9, Page 19, put the two reserved bits between App ID and 
+Function ID 
+Section 12, Page 21, Hydro message – corrected spare bit count from 
+14 to 16 
+Section 12, Page 23, Revised Vessel Procession Order Message 
+   
+2  
+St. Lawrence Seaway AIS Data Messaging Formats and Specifications 
+ 
+Table of Contents 
+1 INTRODUCTION ................................................................................................................... ............. 3  
+1.1 MESSAGE STRUCTURE ..................................................................................................................... 3  
+1.2 BROADCAST INTERVALS ................................................................................................................. 3  
+1.3 LOCATION FIELDS ........................................................................................................................... 4  
+2 COMMON MESSAGE FIELDS......................................................................................................... 5  
+2.1 APPLICATION IDENTIFIER ................................................................................................................ 5  
+2.2 UTC T IME............................................................................................................................... ........ 5  
+3 WIND INFORMATION MESSAGE.................................................................................................. 6  
+3.1 WIND INFORMATION REPORT .......................................................................................................... 6  
+3.1.1 Wind Direction Quantization.................................................................................................. 7  
+3.2 EXAMPLE : WIND INFORMATION MESSAGE ..................................................................................... 8  
+4 WEATHER STATION MESSAGE.................................................................................................... 9  
+4.1 WEATHER STATION REPORT ........................................................................................................... 9  
+4.2 EXAMPLE : WEATHER STATION MESSAGE ..................................................................................... 10  
+5 WATER LEVEL MESSAGE ............................................................................................................ 11 
+5.1 WATER LEVEL REPORT ................................................................................................................. 11  
+5.2 EXAMPLE : WATER LEVEL MESSAGE ............................................................................................. 12  
+6 WATER FLOW  MESSAGE ............................................................................................................. 13 
+6.1 WATER FLOW REPORT .................................................................................................................. 13  
+6.2 EXAMPLE : WATER FLOW MESSAGE .............................................................................................. 14  
+7 LOCKAGE ORDER MESSAGE...................................................................................................... 15  
+7.1 LOCK SCHEDULE REPORT ............................................................................................................. 15  
+7.2 EXAMPLE : LOCKAGE ORDER MESSAGE ........................................................................................ 16  
+8 ESTIMATED LOCK TI MES MESSAGE ....................................................................................... 17  
+8.1 EXAMPLE : ESTIMATED LOCK TIMES MESSAGE ............................................................................. 18  
+9 VERSION MESSAGE ................................................................................................................ ....... 19  
+9.1 EXAMPLE : VERSION MESSAGE ...................................................................................................... 19  
+10 SEAWAY SAFETY RELATED MESSAGE ................................................................................... 20  
+11 REFERENCES:.................................................................................................................... .............. 20  
+12 APPENDIX A – PAWSS MESSAGES ............................................................................................. 21  
+   
+3 1 Introduction 
+1.1 Message Structure 
+ 
+All Saint Lawrence Seaway AIS messages defined in  this specification (except for the safety 
+related text messages in Section 10) are trans mitted as either Broadcas t or Addressed Binary 
+messages.  The message data formats defined in the following sections make up the “binary 
+data” parameter of ITU-R M.1371 messages 6 and 8.  A description of the proposed AIS 
+sentence formats used to interface to the AIS transponder presentation port is found in Annex B 
+of IEC 61993-2 or IEC PAS 6112-100. 
+ Messages transmitted within the border of the United States shall have a Designated Area Code 
+(DAC) of 366.  A DAC of 316 shall be used for trans missions that originate within the border of 
+Canada.  
+Except for the safety related messages, as discuss ed in Section 10, the Function Identifier (FI) for 
+all transmitted Seaway messages shall be:  
+ 
+ Function Message Type Function Identifier (FI) 
+Metrological and Hydrological 1 
+Vessel/Lock Scheduling 2 
+Seaway Specific Messages  32 
+ 
+ 
+Individual message types shall be identified by the Message ID field following the Application 
+Identifier.  
+ 
+DAC FI  Reser
+ved Message ID Seaway Data 
+ 
+     
+ Application ID Application Data   
+ 
+     
+  Binary Data   
+ 
+ 
+1.2 Broadcast Intervals 
+ 
+Each individual Seaway message has an assigned update interval established by the Seaway 
+Traffic Management System (TMS).  However, the AIS network may elect to retransmit any 
+messages, system resources permitti ng, at more frequent intervals. 
+   
+4  
+1.3 Location Fields 
+ 
+All binary messages include a location field (l atitude and longitude in WGS-84 datum).  The 
+position designates the general or  specific area for which the message data is applicable.  For 
+example, weather information messages specify t he location of the actual weather sensor used 
+as the data source.  The position field for some  message types may define an arbitrary point in 
+the vicinity of the applicable area.  For exam ple, a lockage order message will include a latitude 
+and longitude near the lock, but not necessa ry at center of the lock chamber. 
+ The location fields are intended to provide a refer ence point for the data in the messages so that 
+the information may be represented geographically wi th appropriate symbology.  How this data is 
+represented on electronic chart display systems is left to the discretion of the developers (at least 
+until an agreed upon standard is developed for “marine information object” display). 
+ 
+   
+5  
+2 Common Message Fields 
+ 
+The following message fields are commonly found in more than one Seaway messages.  
+2.1 Application Identifier 
+ 
+Parameter Number 
+of bits Description 
+Designated Area 
+Code 10 The Designated Area Code will be 366 for the United States or 316 for 
+Canada depending on the location of transmitter.  Refer to Section 1.1 for description  
+Function Identifier 6 Function Identifier, See Section 1.1 
+Total number of bits 16  
+ 
+ 
+2.2 UTC Time 
+ 
+Parameter Number 
+of bits Description 
+Month 4 Month of year  (01- 12 Month); 0 = not available; 13-15 not used 
+Day 5 Day of month (01 – 31 Days); 0 = not available 
+Hours 5 UTC Hours (0-23); 24 = not available; 25-31 not used 
+Minutes 6 UTC Minutes (0-59); 60 = not available; 61-63 not used 
+Total number of 
+bits 20  
+ 
+All time-referenced information, including month,  day and time of sensor reading observations, 
+will be expressed in Coordinated Universal Time (UTC). 
+ 
+ Example:  May 29, 12:34AM 
+ 
+ 
+Month Day Hour Minute 
+0 1 0 1 1 1 1 0 1 0 0 0 0 0 1 0 0 0 1 0 
+5 29 00 34 
+ 
+   
+6   
+Saint Lawrence Seaway and PAWSS AIS Messages 
+ 
+ 
+3 Wind Information Message  
+ 
+ 
+Parameter Number 
+of bits Description 
+Application ID 16 DAC = 316 or 366; FI = 1; See Section 2.1 
+Reserved 2  
+Message ID 6 Message Identifier  = 2  (00 0010 in binary) 
+Binary Data Max 864 From 1 up to 6 wind informat ion reports, each structured as defined in   
+Section 3.1 
+Total Number of bits Max 888 = 24 + N*144 
+ 
+N      Total Bits    (Slots Required)  
+1        168 bits          (2 slots) 2        312 bits          (2 slots) 
+3        456 bits          (3 slots) 
+4        600 bits          (4 slots) 5        744 bits          (4 slots) 6        888 bits         (5 slots) 
+3.1 Wind Information Report 
+ 
+Parameter Number 
+of bits Description 
+Timetag 20 Month, Day and Time of measurement, See Section 2.2 
+Station ID 42 Seven 6-bit ASCII character ID 
+Longitude 25 Longitude in 1/1000 minute (±180 degrees, East = positive, West = 
+negative.  181 degrees = not available) 
+Latitude 24 Latitude in 1/1000 minute (±90 degrees, North = positive, South = 
+negative.  91 degrees = not available) 
+Wind Speed 10 Average Wind Speed in 1/10th Knot 
+ (0-102.2 knots, 1022 = 102.2 kts or greater, 1023 = not available) 
+Wind Gust 10 Wind Gust in 1/10th Knot  
+(0-102.2 knots, 1022 = 102.2 kts or greater, 1023 = not available) 
+Wind Direction 9 Quantized to 16 compass points (Seaway only); See Section 3.1.1 
+Reserved 4 Reserved for future use 
+Total Number of bits 144  
+ 
+ Notes: 
+ 
+ 
+ Wind information is gathered from anemometers at va rious Seaway facilities; this information is 
+updated every 15 minutes.   
+The wind speed is derived from averaging the inst antaneous readings over a 15-minute interval.  
+ Wind gust represents the highest wind speed measured over 15 minutes.   
+ 
+Each wind information message may contain up to six station readings. If there are more than six 
+station readings, additional messages shall be generated.  
+ 
+Wind information from all sensors is transmitt ed to users throughout the entire Saint Lawrence 
+Seaway AIS network. 
+   
+7 3.1.1 Wind Direction Quantization 
+ 
+Wind direction will be quantized to represent 16 compass points for Saint Lawrence Seaway 
+Stations. 
+ 
+Parameter Number 
+of bits Description 
+Direction 9 Direction, 0- 359 degrees, 511 = not available 
+For Saint Lawrence Seaway, refer to table below for descriptions of quantized values. 
+Total Number of bits 9  
+ 
+Direction Value Description 
+0 N 
+23 NNE 
+45 NE 
+68 ENE 
+90 E 
+113 ESE 
+135 SE 
+158 SSE 
+180 S 
+203 SSW 
+225 SW 
+248 WSW 
+270 W 
+293 WNW 
+315 NW 
+338 NNW 
+ 
+  
+   
+8 3.2 Example: Wind Information Message    
+ 
+Designated Area Code Function Id Res. Message Id 
+0 1 0 0 1 1 1 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1 0 
+316 1 0 2 
+ 
+Timetag … 
+0 1 0 1 1 1 1 0 1 0 0 0 0 0 1 0 0 0 1 0 0 1 0 1 
+5 29 00 34 “T”… 
+ 
+…Station Id… 
+0 0 0 0 0 1 0 1 0 1 0 0 1 1 0 1 0 1 0 0 1 1 0 0 
+…“T” “E” “S” “T” “1”… 
+ 
+…Station Id Longitude… 
+0 1 1 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1 1 0 0 0 1 
+…“1” “ ” “ ” 27° 05’ E… 
+ 
+…Longitude Latitude… 
+1 0 0 1 0 1 1 1 0 1 0 1 0 0 0 0 0 0 0 0 1 0 0 1 
+…27° 05’ E 5° 05’ N… 
+ 
+…Latitude Wind Speed… 
+0 1 0 0 1 1 1 0 1 1 0 1 0 0 0 0 0 0 0 1 0 0 0 0 
+…5° 05’ N 3.2 Knots 
+ 
+… Wind Gust Wind Direction Reserved 
+0 0 0 0 0 1 0 1 0 0 0 1 0 0 1 0 0 1 0 1 0 0 0 0 
+… 4.0 Knots 293 Degrees 0 
+ 
+   
+9  
+4 Weather Station Message 
+  
+Parameter Number 
+of bits Description 
+Application ID 16 DAC = 316 or 366; FI = 1; See Section 2.1 
+Reserved 2  
+Message ID 6 Message Identifier  = 1 (00 0001 in binary) 
+Binary Data Max 768 Message contains 1 to 4 w eather station reports, each structured defined 
+in Section 4.1 
+Total Number of bits Max 792 = 24 + N*192 
+ 
+N      Total Bits       (Slots Required)  
+1       216 bits            (2 slots) 2       408 bits            (3 slots) 
+3       600 bits            (4 slots) 
+  4      792 bits             (5 slots) 
+4.1 Weather Station Report 
+ 
+Notes:  
+ 
+The Weather Station Reports are station observa tions from the National Data Buoy Center 
+(NDBC). Typically, the information is updated onc e every hour.  Depending on climatic conditions, 
+traffic controllers at the Massena, New York Ve ssel Traffic Control Center may provide weather 
+condition updates at a more frequent update interval.   
+The Seaway AIS network will broadcast the fo llowing NDBC stations for the Saint Lawrence 
+River: 
+ Superior Shoals, NY  St ation Identifier: SUPN6 
+ Thousand Island Bridge, NY  Station Identifier: THIN6 
+ Alexandria Bay, NY    Station Identifier: ABAN6 
+ 
+Please refer to the National Data Buoy Center  web site at the following address for additional 
+information.  
+http://seaboard.ndbc.noaa.gov/overview.shtml
+ 
+ The Weather Station Messages are transmitted to users throughout the entire Saint Lawrence 
+Seaway AIS network. Timetag 20 Month, Day and Time of measurement, See Section 2.2 
+Station ID 42 Seven 6-bit ASCII character ID 
+Longitude 25 Longitude in 1/1000 minute (±180 degrees, East = positive, West = negative.  181 = not 
+available) 
+Latitude 24 Latitude in 1/1000 minute (±90 degrees, North = positive, South = negative.  91 = not 
+available) 
+Wind Speed 10 Speed in 1/10th Knot; 0-102.2 knots, 1022 = 102.2 kts or greater, 1023 = not available 
+Wind Gust 10 Gust in 1/10th Knot;    0-102.2 knots, 1022 = 102.2 kts or greater, 1023 = not available 
+Wind Direction 9 Direction in  degrees; 0-359 degrees, 511=NA   
+Atmospheric 
+Pressure 14 Expressed in 1/10th millibars.  (16383 = not available) 
+Air Temp 10 Temperature in 1/10th of a degree Celsius (signed) (-511 to 511 valid range, -511 = -
+51.1 °C or less, 511 = 51.1 °C or greater, -512 = not available) 
+Dew Point 10 Temperature in 1/10th of a degree Celsius (signed) (-511 to 511 valid range, -511 = -
+51.1 °C or less, 511 = 51.1 °C or greater, -512 = not available)) 
+Visibility 8 Visibility in 1/10 kilometers. 
+(0-254, 254 = 25.4km or greater, 255 = not available) 
+Water Temp 10 Temperature in 1/10th of a degree Celsius (signed) (-511 to 511 valid range, -511 = -
+51.1 °C or less, 511 = 51.1 °C or greater, -512 = not available) 
+Total Number of bits 192  
+   
+10 4.2 Example: Weather Station Message    
+ 
+ 
+Designated Area Code Function Id Res. Message Id 
+0 1 0 0 1 1 1 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 
+316 1 0 1 
+ 
+Timetag … 
+0 1 0 1 1 1 1 0 1 0 0 0 0 0 1 0 0 0 1 0 0 1 0 1 
+5 29 00 34 “T”… 
+ 
+…Station Id… 
+0 0 0 0 0 1 0 1 0 1 0 0 1 1 0 1 0 1 0 0 1 1 0 0 
+…“T” “E” “S” “T” “1”… 
+ 
+…Station Id Longitude… 
+0 1 1 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1 1 0 0 0 1 
+…“1” “ ” “ ” 27° 05’ E… 
+ 
+…Longitude Latitude… 
+1 0 0 1 0 1 1 1 0 1 0 1 0 0 0 0 0 0 0 0 1 0 0 1 
+…27° 05’ E 5° 05’ N… 
+ 
+…Latitude Wind Speed… 
+0 1 0 0 1 1 1 0 1 1 0 1 0 0 0 0 0 0 0 1 0 0 0 0 
+…5° 05’ N 3.2 Knots 
+ 
+… Wind Gust Wind Direction … 
+0 0 0 0 0 1 0 1 0 0 0 1 0 0 1 0 0 1 0 1 1 0 0 1 
+… 4.0 Knots 293 Degrees … 
+ 
+…Atmospheric Pressure Air Temp Dew Point… 
+1 1 0 0 0 1 0 0 0 0 1 1 1 1 1 1 1 1 1 0 1 1 1 1 
+1000 millibars -0.2°C … 
+ 
+…Dew Point Visibility Water Temp 
+1 1 0 1 0 0 0 0 0 0 1 0 0 1 0 0 0 0 1 1 1 1 0 0 
+…-1.2°C 0.9 Km 6.0°C 
+ 
+ 
+   
+11  
+5 Water Level Message 
+ 
+  
+Parameter Number 
+of bits Description 
+Application ID 16 DAC = 316 or 366; FI = 1; See Section 2.1 
+Reserved 2  
+Message ID 6 Message Identifier = 3  (00 0011 in binary) 
+Binary Data Max 864 Message contains 1 to 6 wa ter level reports, each structured as defined 
+in Section 5.1 
+Total Number of bits Max 888 = 24 + N*144 
+ N       Total Bits        (Slots Required)
+ 
+1         168 bits             (2 slots) 
+2         312 bits             (2 slots) 3         456 bits             (3 slots) 
+4         600 bits             (4 slots) 
+5         744 bits             (4 slots) 6         888 bits             (5 slots) 
+5.1 Water Level Report 
+ 
+Timetag 20 Month, Day and Time of reading, See section 2.2 
+Station ID 42 Seven 6-bit ASCII character ID 
+Longitude 25 Longitude in 1/1000 minute (±180 degrees, East = positive, West = 
+negative.  181 degrees = not available) 
+Latitude 24 Latitude in 1/1000 minute (±90 degrees, North = positive, South = 
+negative.  91 degrees = not available) 
+Water Level Type 1 0 or 1;    0 = Relative to reference datum , 1 =  Water Depth , 
+Note: Always 0 for Saint Lawrence Seaway  
+Water Level  16 Water level in centimeters  -327.67 to +327.67 meters,  
+-32767 = -327.67 m or less, +32767 = +327.67 m or greater, -32768 = not available 
+Reference Datum 2 Defines datum used 
+0 = MLLW 
+1 = IGLD-85 
+2,3 = reserved for future use Note: Always 1 for Saint Lawrence Seaway 
+Reserved 14 Reserved bits for future use 
+Total Number of bits 144  
+ 
+ 
+Notes:  
+ 
+Readings are updated once every hour.  Information from available water level sensors will be 
+broadcast throughout the Sa int Lawrence Seaway. 
+ 
+  
+Water level readings at the Saint Lawrence S eaway are based on the 1985 - International Great 
+Lakes Datum (IGLD-85).     
+   
+12  
+5.2 Example: Water Level Message 
+ 
+ 
+Designated Area Code Function Id Res. Message Id 
+0 1 0 0 1 1 1 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1 1 
+316 1 0 3 
+ 
+Timetag … 
+0 1 0 1 1 1 1 0 1 0 0 0 0 0 1 0 0 0 1 0 0 1 0 1 
+5 29 00 34 “T”… 
+ 
+…Station Id… 
+0 0 0 0 0 1 0 1 0 1 0 0 1 1 0 1 0 1 0 0 1 1 0 0 
+…“T” “E” “S” “T” “1”… 
+ 
+…Station Id Longitude… 
+0 1 1 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1 1 0 0 0 1 
+…“1” “ ” “ ” 27° 05’ E… 
+ 
+…Longitude Latitude… 
+1 0 0 1 0 1 1 1 0 1 0 1 0 0 0 0 0 0 0 0 1 0 0 1 
+…27° 05’ E 5° 05’ N… 
+ 
+…Latitude T Water Level… 
+0 1 0 0 1 1 1 0 1 1 0 1 0 0 0 0 0 0 0 0 0 0 0 0 
+…5° 05’ N 0 0.32m… 
+ 
+…Water Level RD Reserved 
+0 0 1 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+…0.32m IGLD 0 
+ 
+   
+13  
+6 Water Flow Message (Seaway)  
+ 
+ 
+  
+Parameter Number 
+of bits Description 
+Application ID 16 DAC = 316 or 366; FI = 1; See Section 2.1 
+Reserved  2  
+Message ID 6 Message Identifier = 6  (00 0110 in binary) 
+Binary Data Max 864 Message contains 1 to 6 wate r flow reports, each flow report is defined in 
+Section 6.1 
+Total Number of bits Max 888 = 24 + N*144 
+ 
+N       Total Bits        (Slots Required)  
+1         168 bits             (2 slots) 
+2         312 bits             (2 slots) 
+3         456 bits             (3 slots) 4         600 bits             (4 slots) 
+5         744 bits             (4 slots) 
+6         888 bits             (5 slots) 
+6.1 Water Flow Report 
+ 
+Timetag 20 Month, Day and Time of reading, See section 2.2 
+Station ID 42 Seven 6-bit ASCII character ID 
+Longitude 25 Longitude in 1/1000 minute (±180 degrees, East = positive, West = 
+negative.  181 degrees = not available) 
+Latitude 24 Latitude in 1/1000 minute (±90 degrees, North = positive, South = 
+negative.  91 degrees = not available) 
+Water Flow 14 Water flow in cubic me ters per second (16383 = Not Available) 
+Reserved 19 Reserved bits for future use 
+Total Number of bits 144  
+ 
+ 
+Notes: 
+ 
+ 
+ Flow information from sensors will be trans mitted to users throughout the Saint Lawrence 
+Seaway via the AIS network. 
+ Water flow readings are updated once every hour and will be repeated over the network every 15 
+minutes. 
+ 
+   
+14  
+6.2 Example: Water Flow Message     
+ 
+ 
+Designated Area Code Function Id Res. Message Id 
+0 1 0 0 1 1 1 1 0 0 0 0 0 0 0 1 0 0 0 0 0 1 1 0 
+316 1 0 6 
+ 
+Timetag … 
+0 1 0 1 1 1 1 0 1 0 0 0 0 0 1 0 0 0 1 0 0 1 0 1 
+5 29 00 34 “T”… 
+ 
+…Station Id… 
+0 0 0 0 0 1 0 1 0 1 0 0 1 1 0 1 0 1 0 0 1 1 0 0 
+…“T” “E” “S” “T” “1”… 
+ 
+…Station Id Longitude… 
+0 1 1 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1 1 0 0 0 1 
+…“1” “ ” “ ” 27° 05’ E… 
+ 
+…Longitude Latitude… 
+1 0 0 1 0 1 1 1 0 1 0 1 0 0 0 0 0 0 0 0 1 0 0 1 
+…27° 05’ E 5° 05’ N… 
+ 
+…Latitude Water Flow… 
+0 1 0 0 1 1 1 0 1 1 0 1 0 0 0 1 0 0 0 0 0 0 0 0 
+…5° 05’ N 8192 m3/s… 
+ 
+…Water Flow Reserved 
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+…8192 m3/s 0 
+ 
+   
+15  
+7 Lockage Order Message (Seaway)  
+ 
+ 
+Parameter Number 
+of bits Description 
+Application ID 16 DAC = 316 or 366; FI = 2; See Section 2.1 
+Reserved 2  
+Message ID 6 Message Identifier  = 1  (00 0001 in binary) 
+Timetag 20 Month, Day and Time of Message, See Section 2.2 
+Lock ID 42 Seven characters in 6 bit ASCII.  “@@@@@@@” = not available 
+Longitude 25 Longitude in 1/1000 minute (±180 degrees, East = positive, West = 
+negative.  181 degrees = not available) 
+Latitude 24 Latitude in 1/1000 minute (±90 degrees, North = positive, South = 
+negative.  91 degrees = not available) 
+Reserved 9 Reserved bits for future use 
+Lock Schedule Min 120 
+Max 720 Each Lock Order Message contains up to 6 lock schedule reports 
+structured as defined in Section 7.1 
+Total Number of bits Min 264 
+Max 864 = 144+N*120  
+ N       Total Bits        (Slots Required)
+ 
+1         264 bits             (2 slots) 
+2         384 bits             (3 slots) 3         504 bits             (3 slots) 
+4         624 bits             (4 slots) 
+5         744 bits             (4 slots) 6         864 bits             (5 slots) 
+7.1 Lock Schedule Report 
+ 
+Parameter Number 
+of bits Description 
+Vessel Name 90 15 characters in 6-bit ASCII.  “@@@@@@@@@@@@@@@” = not 
+available  
+Direction 1 TRUE = Up bound = 1, FALSE = Down bound = 0 
+ETA 20 Estimated time of arrival  (format as defined in Section 2.2) 
+Reserved 9 Reserved bits for future use 
+Total Number of Bits 120  
+ 
+Notes:  
+ 
+The Lockage Order Message contains schedule info rmation for the next three lock operations. 
+Two separate messages will be send for Locks with  dual chambers, such as the Welland Canal 
+flight locks.  
+ 
+The Lockage Order Message is a local binary br oadcast message. Lockage order information is 
+updated every 15 minutes.  The transmission of th is message is limited to areas where the 
+information is applicable.  
+ 
+Lock Identifiers: 
+ SLS_L01 -   Welland Canal Lock 1 SLS_IRO  - Iroquois Lock 
+SLS_L02 -   Welland Canal Lock 2 SLS_IKE  -  Eisenhower Lock 
+SLS_L03 -   Welland Canal Lock 3 SLS_SNL -  Snell Lock SLS_L4E -   Welland Canal Lock 4 East SLS_BO3 -  Beauharnois Lock 3 
+SLS_L4W -  Welland Canal Lock 4 West SLS_BO4 -  Beauharnois Lock 4 
+SLS_L6E -   Welland Canal Lock 6 East SLS_CSC - Cote Saint Catherine Lock SLS_L6W -  Welland Canal Lock 6 West SLS_SLB -  Saint Lambert Lock 
+SLS_L07 -    Welland Canal Lock 7  
+SLS_L08 -    Welland Canal Lock 8  
+   
+16  
+7.2 Example: Lockage Order Message    
+ 
+ 
+Designated Area Code Function Id Res. Message Id 
+0 1 0 0 1 1 1 1 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1 
+316 2 0 1 
+ 
+Timetag … 
+0 1 0 1 1 1 1 0 1 0 0 0 0 0 1 0 0 0 1 0 0 1 0 1 
+5 29 00 34 “T”… 
+ 
+…Lock Id… 
+0 0 0 0 0 1 0 1 0 1 0 0 1 1 0 1 0 1 0 0 1 1 0 0 
+…“T” “E” “S” “T” “1”… 
+ 
+…Lock Id Longitude… 
+0 1 1 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1 1 0 0 0 1 
+…“1” “ ” “ ” 27° 05’ E… 
+ 
+…Longitude Latitude… 
+1 0 0 1 0 1 1 1 0 1 0 1 0 0 0 0 0 0 0 0 1 0 0 1 
+…27° 05’ E 5° 05’ N… 
+ 
+…Latitude Reserved 
+0 1 0 0 1 1 1 0 1 1 0 1 0 0 0 0 0 0 0 0 0 0 0 0 
+…5° 05’ N 0 
+ 
+Vessel Name… 
+0 0 1 1 0 1 0 0 1 0 0 1 0 0 1 1 0 0 0 0 1 0 1  
+“M” “I” “L” “K” 
+ 
+…Vessel Name… 
+0 1 1 0 0 1 1 0 0 0 0 0 0 1 0 0 1 1 0 1 0 1 0 0 
+“Y” “ ” “S” “T” 
+ 
+…Vessel Name… 
+0 0 0 0 0 1 0 1 0 0 1 0 1 0 0 0 0 0 1 0 0 0 0 0 
+“A” “R” “ ” “ ” 
+ 
+…Vessel Name D ETA… 
+1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0 1 0 1 1 
+“ ” “ ” “ ” U May …
+ 
+ Reserved 
+1 1 0 1 0 0 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0 0 0 0 
+…29th 00 34 0 
+ 
+ 
+ 
+ 
+   
+17  
+8 Estimated Lock Times Message (Seaway)  
+ 
+Parameter Number 
+of bits Description 
+Application ID 16 DAC = 316 or 366; FI = 2; See Section 2.1 
+Reserved 2  
+Message ID 6 Message Identifier = 2 (00 0010 in binary) 
+Timetag 20 Month, Day and Time of message, See Section 2.2 
+Vessel Name 90 15 character vessel name in 6 bit ASCII 
+Last Location 42 7 character identifie r of last location in 6 bit ASCII 
+Last ATA 20 See Section 2.2 
+First Lock 42 7 character identifie r of first lock in 6 bit ASCII 
+First Lock ETA 20 See Section 2.2 
+Second Lock 42 7 character identifier of second lock in 6 bit ASCII 
+Second Lock ETA 20 See Section 2.2 
+Delay 42 7 character identifier of the fi rst lock which currently has a vessel being 
+delayed 
+Reserved 4  
+Total Number of Bits 366  (3 Slots) 
+ 
+ 
+Notes: 
+ 
+ 
+The Estimated Lock Time message is an addressed binary message sent to individually targeted 
+vessels.  Once the Seaway AIS network rece ives an acknowledgement from the intended vessel 
+transponder (M.1371/A2-3.3.8.2.5 Message 7: Binar y Acknowledge) indicating that the message 
+has been received, no further transmissions will be issued.  In addition, any change to the 
+estimated lock times will result in the imm ediate transmission of the updated information.  
+ 
+ 
+   
+18 8.1 Example: Estimated Lock Times Message  
+ 
+Designated Area Code Function Id Res. Message Id 
+0 1 0 0 1 1 1 1 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 
+316 2 0 2 
+ 
+Timetag … 
+0 1 0 1 1 1 1 0 1 0 1 1 0 0 0 1 1 1 1 0 0 0 1 1 
+May 29th 12 30 “M”… 
+ 
+…Vessel Name… 
+0 1 0 0 1 0 0 1 0 0 1 1 0 0 0 0 1 0 1 1 0 1 1 0 
+… “I” “L” “K” “Y”… 
+ 
+…Vessel Name… 
+0 1 1 0 0 0 0 0 0 1 0 0 1 1 0 1 0 1 0 0 0 0 0 0 
+… “ ” “S” “T” “A” 
+ 
+…Vessel Name… 
+0 1 0 1 0 0 1 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 
+… “R” “ ” “ ” “ ” 
+ 
+…Vessel Name Last Location… 
+0 0 1 0 0 0 0 0 1 0 0 0 0 0 0 1 0 0 1 1 0 0 1 1 
+… “ ” “ ” “S” “L” 
+ 
+…Last Location… 
+0 0 0 1 0 0 1 1 0 1 1 1 1 1 0 0 1 1 0 0 1 1 0 0 
+… “S” “_” “L” “0” 
+ 
+…Last Location Last ATA… 
+0 0 1 1 0 0 0 1 0 1 0 1 1 1 1 0 1 0 1 1 0 1 0 0 
+… “1” May 29th 13 … 
+ 
+… First Lock… 
+0 0 0 0 0 1 0 0 1 1 0 0 1 1 0 0 0 1 0 0 1 1 0 1 
+…00 “S” “L” “S” … 
+ 
+…First Lock … 
+1 1 1 1 0 0 1 1 0 0 1 1 0 0 0 0 1 1 0 0 1 0 0 1 
+“_” “L” “0” “2” … 
+ 
+…First Lock ETA Second Lock… 
+0 1 1 1 1 0 1 0 1 1 0 1 0 1 1 1 1 0 0 1 0 0 1 1 
+May 29th 13 30 “S” 
+ 
+…Second Lock… 
+0 0 1 1 0 0 0 1 0 0 1 1 0 1 1 1 1 1 0 0 1 1 0 0 
+“L” “S” “_” “L”  
+…Second Lock Second Lock ETA… 
+1 1 0 0 0 0 1 1 0 0 1 1 0 1 0 1 1 1 1 0 1 0 1 1 
+“0” “3” May 29th 14…  
+…Second Lock ETA Delay… 
+1 0 0 0 0 0 0 0 0 1 0 0 1 1 0 0 1 1 0 0 0 1 0 0 
+… 00 “S” “L” “S”…  
+…Delay… 
+1 1 0 1 1 1 1 1 0 0 1 1 0 0 1 1 0 0 0 0 1 1 0 0 
+… “_” “L” “0” “1”…  
+… Reserved 
+0 1 0 0 0 0 
+… 0 
+   
+19 9 Version Message (Seaway)  
+ 
+Parameter Number of bits Description 
+Application ID 16 DAC = 316 or 366; FI = 32; See Section 2.1 
+Reserved 2  
+Seaway Message ID 6 Message Identifier = 1  (00 0001 in binary) 
+Major Version 8 Major revision number 
+Minor Version 8 Minor revision number 
+Reserved 8 Reserved for future use 
+Total Number of bits 48 (1 Slot) 
+ 
+ 
+Notes: 
+  
+The Version Message identifies the current me ssage specifications being used by the Saint 
+Lawrence Seaway AIS network.  The combined major and minor revision numbers refer to the document version of the “Saint Lawrenc e Seaway AIS DATA Messaging Formats and 
+Specifications”. 
+ A major revision number change indicates that an existing message has been revised. Decoding 
+algorithms for previous message versions will misi nterpret the content of  the revised message. 
+ 
+A change in the minor revision number refers to an addition of one or more new messages. 
+These message additions should not cause decoding routines that are compliant to the current 
+major revision to misinterpret existing mess ages.  If the Seaway agencies deem that a newly 
+introduced message is critical to transit safety, the operating agencies may elect to make that a 
+Major revision change.  
+The Version Message is a binary br oadcast. All shore stations in t he AIS network will transmit this 
+message once every 15 minutes.  
+Note: Version 4.0 (major version = 4 and minor version = 0) will be the initial version message 
+when the Seaway AIS netwo rk begins its operation. 
+ 
+ 
+9.1 Example: Version Message 
+ 
+Example: 
+ 
+Designated Area Code Function Id Res Message Id  
+0 1 0 0 1 1 1 1 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 
+316 32 0 1 
+ 
+Major Version Minor Version Reserved 
+0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+4 0 0 
+ 
+ 
+   
+20  
+10 Seaway Safety Related Message 
+ 
+The Seaway may transmit addressed and broadcast sa fety related text messages to notify AIS 
+equipped users to waterway conditions that affect transit safety or effi ciency. These messages 
+will be formatted as defined in the IEC 61993- 2 document Section 7.6.19 (Message 12) and, 
+Section 7.6.21 (Message 14).  
+  
+  
+ 
+11 References: 
+ 
+ 
+• IMO Resolution MSC.74(69), Annex 3, Re commendation on Performance Standards for 
+an Universal Shipborne Automatic Identification Systems (AIS) 
+ 
+• ITU-R Recommendation M.1371-1, Technical C haracteristics for a Universal Shipborne 
+Automatic Identification System Using Time Division Multiple Access in the Maritime 
+Mobile Band 
+ 
+• IEC 61993-2 Ed.1, Maritime navigation and radiocommunication requirements - 
+Automatic identification syst ems (AIS) - Part 2: Class A shipborne equipment of the 
+universal automatic identification syst em (AIS) - Operational and performance 
+requirements, methods of te st and required test results 
+ 
+• NMEA 0183: Standards For Interfacing Marine Electronic Devices, © NMEA 2000 
+Version 3.00, July 1,2000 
+   
+21 12 Appendix A – PAWSS Messages 
+  
+Messages detailed in this section will be used in areas where U.S. Coast Guard PAWSS AIS 
+coverage is available.     
+ 
+• Hydro /Current Message 
+ 
+PARAMETER BITS DESCRIPTION RANGE RESOLUTION DATA TYPE
+Application ID 
+ 16 DAC (10 bits) + FI (6 bits); FI  = 1     
+Spare 2        
+Msg ID 6 Msg ID = [ 000100 ] = 4  1-63  UInt 
+Station binary 
+data Max  
+896 From 1 to 6 “Hydro/Current Reports”    
+Total Num Bits Max   
+920  = 24 + N*144 
+ 
+N; Total Bits (Num Req’d Slots)  
+1;  168 bits (2 slots) 2;  312 bits (2 slots) 3;  456 bits (3 slots) 
+4;  600 bits (4 slots) 
+5;  744 bits (4 slots) 6;  888 bits (5 slots)    
+ 
+• Hydro /Current Report 
+ 
+PARAMETER BITS DESCRIPTION RANGE RESOLUTION DATA TYPE
+Timestamp 20 Timestamp: MMDDhhmm  (4,5,5,6 bits) 
+(UTC time) 1-12 Month 
+1-31 Day  
+0-23 hour 0-59 min  1 minute Unsigned Int 
+Station Id 42 Alphanumeric string (7 6-bit chars)   String 
+Longitude 25 Longitude : East = positive, West = 
+negative ± 180 deg, 
+181 deg = NA 1/1000 minute Signed Int 
+Latitude 24 Latitude : North = positive, South = 
+negative ± 90 deg, 
+91 deg = NA 1/1000 minute Signed Int 
+Current speed  8 In 1/10th of a knot 
+Output Range: 0 to 25.4 knots  0 – 253, 
+254 = ≥ 254 
+255 = NA 1/10 kt Unsigned short
+Current direct 
+ 9 Travelling toward 0 – 359 deg, 
+511 = NA 1 deg Unsigned int 
+Spare 16 Reserved bits for future use    
+TOTAL  BITS 144      
+ 
+   
+22  
+ 
+• Hydro /Salinity Temp Message 
+ 
+PARAMETER BITS DESCRIPTION RANGE RESOLUTION DATA TYPE
+Application ID 
+ 16 DAC (10 bits) + FI (6 bits); FI = 1     
+Spare 2        
+Msg ID 6 Msg ID = [ 000101 ] = 5  1-63  UInt 
+Station binary 
+data Max 
+816 From 1 to 6 “Hydro Salinity Reports”    
+Total Num Bits Max 
+840  = 24 + N*144 
+ 
+N; Total Bits (Num Req’d Slots)  
+1;  168 bits (2 slots) 2;  312 bits (2 slots) 
+3;  456 bits (3 slots) 
+4;  600 bits (4 slots) 5;  744 bits (4 slots) 
+6;  888 bits (5 slots)    
+ 
+ 
+• Hydro /Salinity Temp Report 
+ 
+PARAMETER BITS DESCRIPTION RANGE RESOLUTION DATA TYPE
+Timestamp 20 Timestamp: MMDDhhmm  (4,5,5,6 bits) 
+(UTC time) 1-12 Month 
+1-31 Day  
+0-23 hour 
+0-59 min  1 minute Unsigned Int 
+Station Id 42 Alphanumeric string (7 6-bit chars)   String 
+Longitude 25 Longitude : East = positive, West = 
+negative ± 180 deg, 
+181 deg = NA 1/1000 minute Signed Int 
+Latitude 24 Latitude : North = positive, South = 
+negative ± 90 deg, 
+91 deg = NA 1/1000 minute Signed Int 
+Salinity 
+ 10 in Practical Salinity Units (PSU) * 10 
+Output Range: 0 to 102.2 PSU 0 -  1022, 
+1023 = NA 0.1 PSU UInt 
+Water Temp 
+ 10 In 1/10th of a degree Celsius  
+Range = -51.1 to +51.1 deg C -511 to +511, 
+-511 = ≤ -511, 
++511 = ≥ +511, 
+-512 = NA 0.1 deg C Signed int 
+Spare 13 Reserved bits for future use     
+TOTAL BITS 144      
+ 
+   
+23  
+ 
+• Vessel Procession Order Message 
+  
+ 
+PARAMETER BITS DESCRIPTION RANGE RESOLUTION DATA TYPE
+Application ID 
+ 16 DAC (10 bits) + FI (6 bits)    
+Reserved 2  Reserved bits for future use      
+Msg ID 6 Msg ID = [ 000011 ] = 3  1-63  UInt 
+Timestamp 20 Timestamp: MMDDhhmm  (4,5,5,6 bits) 
+(UTC time) 1-12 Month; 0=NA 
+1-31 Day; 0=NA 
+0-23 hour; 24=NA 0-59 min; 60=NA 1 minute Unsigned Int 
+Direction Id 96 Alphanumeric stri ng (16 6-bit chars)   String 
+Longitude 25 Longitude : East = positive, West = 
+negative ± 180 deg, 
+181 deg = NA 1/1000 minute Signed Int 
+Latitude 24 Latitude : North = positive, South = 
+negative ± 90 deg, 
+91 deg = NA 1/1000 minute Signed Int 
+Reserved 3  Reserved for future use    
+Binary data Max  
+  From 1 to 4 “Vessel Order Reports”    
+Total Num Bits Max   
+ = 192 + N*184 
+ 
+N; Total Bits (Num Req’d Slots)  
+1; 376 bits (3 slots) 2; 560 bits (4 slots) 
+3; 744 bits (4 slots) 
+4; 928 bits (5 slots)     
+ 
+ 
+• Vessel Procession Order Report 
+ 
+PARAMETER BITS DESCRIPTION RANGE RESOLUTION DATA TYPE
+Order 5 Vessel’s procession order in list (“1” being 
+the first vessel to proceed) 1-31  UInt 
+Vessel Name 90 15 6-bit chars    string 
+Position Name 72  vessel position at time of last call-in 
+  (12 6-bit chars)   string 
+Time 11  time of call-in associated with position 
+“Position Name” 
+: hhmm  (5,6 bits) (UTC time)  0-23 hour 
+0-59 min  1 minute Unsigned Int 
+Reserved 6  Reserved bits for future use    
+TOTAL  BITS 184      
+ 
+ 
+ 
+ 
+   
+24 
+ 
+ 

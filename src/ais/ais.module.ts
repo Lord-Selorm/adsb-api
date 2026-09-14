@@ -7,6 +7,8 @@ import { AisController } from './ais.controller.js';
 import { AIS_TRANSPORT_TOKEN } from './ais.transport.token.js';
 import { AisMockTransport } from './transports/ais-mock.transport.js';
 import { AisSerialTransport } from './transports/ais-serial.transport.js';
+import { AisTcpTransport } from './transports/ais-tcp.transport.js';
+import { AisUdpTransport } from './transports/ais-udp.transport.js';
 
 @Module({
   imports: [ConfigModule],
@@ -37,6 +39,27 @@ import { AisSerialTransport } from './transports/ais-serial.transport.js';
             centerLat: Number(config.get('RECEIVER_LAT', '52')),
             centerLon: Number(config.get('RECEIVER_LON', '4')),
             tickMs: Number(config.get('AIS_MOCK_TICK_MS', '2000')),
+          });
+        }
+
+        const transportMode = config
+          .get<string>('AIS_TRANSPORT', 'serial')
+          .toLowerCase();
+
+        if (transportMode === 'udp') {
+          return new AisUdpTransport({
+            host: config.get<string>('AIS_UDP_HOST', '0.0.0.0'),
+            port: Number(config.get('AIS_UDP_PORT', '65110')),
+          });
+        }
+
+        if (transportMode === 'tcp') {
+          return new AisTcpTransport({
+            host: config.get<string>('AIS_TCP_HOST', '192.168.0.8'),
+            port: Number(config.get('AIS_TCP_PORT', '8236')),
+            reconnectDelayMs: Number(
+              config.get('AIS_TCP_RECONNECT_MS', '1000'),
+            ),
           });
         }
 

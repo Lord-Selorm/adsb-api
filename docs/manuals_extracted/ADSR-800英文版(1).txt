@@ -1,0 +1,90 @@
+ADSR-800
+Introduction
+Directradioreceivingtechnologyisadopted
+Thereceiverismainlycomposedofmultiplenarrowbandfiltersandlownoise
+amplifierstoimprovethereceivingperformance
+Thereceiverusesahigh-speedandhighdynamiclogarithmicdetectorforthe
+detectionpart,andahardwarecircuitisusedforthedecodingpart
+TheDSPatthebackendwillcarryoutCRC24verificationontheBPPMandsignal,
+andthenoutputitthroughtheserialport
+Theresponsespeedofthisreceiverisveryfastandthedecodinghasalmostno
+delay.Thereceiverhasexcellentreceivingsensitivity
+Speciality
+Highsensitivity
+Lowlatency
+Ultrawidedynamicrange
+It'scoldandfoggy
+Excellentreliability
+Smallsize
+Application
+ADS-Bsignalreceivingbasestation
+Dynamicmonitoring
+Dronesavoidcollisions
+Abuoyonthewater
+Portablereceiver
+Parameters
+1.EssentialParameter
+Parameter Min TypicalMaxUnit
+SupplyVoltage 7 9 16 V
+PowerConsumption 260 mA
+ModulationMode BPPM
+EncodingMethod PulsePositionEncoding
+ReceiveFrequency 1090 MHz
+DopplerShiftTolerance ±4 MHz
+ReceiveSensitivity -97 dBm
+ReceiveDynamicRange -125 -20 dBm
+Antennalmpedance 50 Ω
+AntennaInterface SMA-KWVE
+DataInterface RS232
+Note:Theaboveparametersweremeasuredat25°C.
+2、AbsoluteRating
+Parameter Value Unit
+MaximumInputVoltage 30 Voc
+MaxRFInputPower -20 dBm
+OperatingTemperature -30to+85 ℃
+StorageTemperature -45to+85 ℃
+Warning:Exceedingtheselimitsmaycausepermanentdamagetothedevice.
+ProductDimensions:
+TheADSR-800receiverusestheDB9(motherhead)interfacefordataoutput.The
+interfaceusestheRS232protocoltocommunicatewiththeuppercomputer.The
+defaultparametersoftheserialportare:460800,8,1,none,none.
+TheDB9pinofthereceiverisdefinedasshowninTable4below
+Function DB9Pin
+NC(NoConnection) 1
+ReceiverDataOutput(TXD) 2
+ReceiverDataInput(RXD) 3
+NC 4
+ReceiverGround(GND) 5
+NC 6
+NC 7
+NC 8
+NC 9
+Thestartupinformationoutputbytheserialportwhenthereceiveristurned
+on:
+JouleMore.LtdSince2009\n\r
+ADS-BModeSReceiverV2.2\n\r
+OutputAllDFmessages\n\r(orOutputDF17only\n\r)
+Iftheuserneedstochangethebaudrateoroutputmode,he/sheneedstosendthe
+settingcommandwithin5secondsafterreceivingtheaboveinformation.The
+receiverwillnotrespondtothesettingmessagesentatothertimes.
+Command Parameter ParameterDefinition
+Uart_Baud=X XWhenX=0,baudrateissetto57600bps
+WhenX=1,baudrateissetto115200bps
+WhenX=2,baudrateissetto128000bps
+WhenX=4,baudrateissetto230400bps
+WhenX=4,baudrateissetto256000bps
+WhenX=5,baudrateissetto460800bps
+WhenX=6,baudrateissetto512000bps
+WhenX=7,baudrateissetto921600bps
+WhenX=8,baudrateissetto1000000bps
+WhenX=9,baudrateissetto1500000bps
+SetOutput=X X WhenX=0,settooutputallmessages
+WhenX=1,settooutputonlyDF17
+Forexample,send:Uart_Baud=0tosetthebaudrateto57600
+SetOutput=1setsthedevicetooutputonlyDF17messages
+payattentionto：
+1Whenusing,thebaudrateshouldnotbesettoolow!Whenusinginbusyairspace,
+thebaudratewillleadtomessageblocking,datadelayandpacketloss,whichwill
+affectthenormaloperationofthereceiver.
+2Aftersendingthecommandtosettheparameters,youneedtopoweroffthedevice
+andrestartthenewparameterstotakeeffect.

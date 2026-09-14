@@ -1,0 +1,112 @@
+URM-02DroneRIDDetectionModuleUser
+Manual(EN)
+URM-02DroneRIDDetectionModuleUserManual
+1.ProductOverview
+TheURM-02dronedetectionenhancementmodulereceivesanddecodesbroadcast
+messagesignalstransmittedremotelybydrones.Dronescompliantwiththefollowing
+internationalstandardscanbedetectedandidentified:ChinaNationalStandardsGB42590-
+2023andGB46750-2025;EuropeanstandardASD-STANDINEN4709-002;andU.S.ASTMRemote
+IDstandardASTMF3411-2a-RID-BF3586-22.Themoduleintegratesabuilt-inGNSSpositioning
+moduleandanLNA(LowNoiseAmplifier),withanoptional4Gcommunicationmodule.Itoffers
+comprehensiveexternalinterfaces:astandardRJ45Ethernetportforcommunication,a
+standardDCpowerinput,aType-Cportforpoweranddebugging,andareservedGPIO
+expansioninterface.DetectionresultdataisoutputviatheEthernetport(anoptional4G
+modulewithMQTTprotocoltransmissionisavailable).
+2.ProductAppearance
+Figure1.ProductAppearance
+Figure2.InterfaceDiagram
+DCPowerPort(5‒15V):Modulepowerinput;operatingvoltage5‒15V.
+4GAntennaPort:Antennaconnectorforthe4Gmodule.
+Type-CPort:Modulepowerandcommunicationinterface(doesnotconflictwiththeDC
+powerport;bothcanbeconnectedsimultaneously).
+GNSSPort:AntennaconnectorfortheGNSSpositioningmodule.
+DetectionAntennaPort:Antennaconnectorforthedetectionmodule.
+EthernetPort:StandardRJ45portfordetectiondataoutput.
+PowerLED:Devicepowerindicator.
+AlarmLED:Devicealarmindicator.
+3.ProductSpecifications
+Item Specification
+OperatingMode PassiveDetection
+SupportedDrones DroneswithRemoteIDtransmission
+GNSSPositioning GPS/BDS
+DetectionRange 2km(direct-connectedantenna,open-fieldline-of-sight
+environment)
+RIDDetection Wi-Fi,Bluetooth
+CommunicationInterface DirectEthernetconnection(customizable4GremoteMQTT
+transmissionavailable)
+Dimensions 85×78×18mm
+PowerInput Type-CorDCconnector
+SupplyVoltage 5‒15V(DCport)
+OperatingTemperature −20°C~+60°C
+4.FunctionalDescription
+4.1AlarmDataOutputviaEthernetPort(UDPCommunication)
+(1)Poweronthedevice:UsetheDCpowerportortheType-Cporttopoweron.
+(2)Connectthedevice:UseanEthernetcabletoconnectthedevicedirectlytoacomputer.
+(3)Setthecomputer'slocalIPaddress:ConfiguretheIPaddressofthecorresponding
+Ethernetinterfaceonthecomputerto192.168.0.X(thedevice'sdefaultIPis192.168.0.3,soX
+cannotbe3),forexample192.168.0.100,andsetthesubnetmaskto255.255.255.0.Asshownin
+thefigurebelow.
+
+(4)Configurethenetworkdebuggingutility:OpenNetAssist.exe,selectUDPastheprotocol
+type,setthelocalhostaddresstotheIPaddressconfiguredinstep(3),e.g.,192.168.0.100,set
+thelocalhostportto65100,andclick"Open".
+
+(5)Viewdevicelocationinformation:Whennodroneisdetected,thedevicecontinuously
+outputsitsownGNSSlatitudeandlongitude.
+(6)Viewdronealarminformation:Onceadroneisdetected,thecorrespondingdronealarm
+informationwillbeoutput.
+4.2MainDataProtocolforEthernetPortOutput(UDP)
+Forthedetaileddataprotocol,pleasecontactoursalesortechnicalsupportteam.
+4.2.1GNSSDataProtocol
+FieldNo. FieldName FieldCode DataType Remarks
+1 FrameType frame_type short 
+2 DeviceSerial
+Numberdev_sn String 
+3 FrameContent frame_info VariableType 
+4 Current
+Date/Timedatetime String YYYY-MM-DDHH:mm:ss
+5 Device
+Longitudelongitude double WGS84coordinatesystem
+6 DeviceLatitude latitude double WGS84coordinatesystem
+4.2.2DroneAlarmInformationDataProtocol
+FieldNo. FieldName FieldCode DataType Remarks
+1 SerialNumber uav_sn String 
+2 DetectionTime record_datetime String YYYY-MM-DDHH:mm:ss
+3 DroneLongitude uav_lon double WGS84coordinatesystem
+4 DroneLatitude uav_lat double WGS84coordinatesystem
+5 Altitude uav_height float m/s
+6 HorizontalSpeed uav_v_hor float m/s
+7 PilotLongitude app_lon double WGS84coordinatesystem
+8 PilotLatitude app_lat double WGS84coordinatesystem
+9 DroneType uav_type String 
+10 DeviceLongitude dev_lon double Shoulderlighthasno
+GPS;thisvalueis0
+11 DeviceLatitude dev_lat double Shoulderlighthasno
+GPS;thisvalueis0
+12 FixedStation
+DeviceNamedev_name String 
+4.3MainDataProtocolfor4GModuleOutput(MQTT)
+Forthedetaileddataprotocol,pleasecontactoursalesortechnicalsupportteam.
+Whenusingthe4Gmoduletooutputdronealarmdata,thedevicedoesnotcontinuously
+reportitsownlocation.Onceadroneisdetected,thecorrespondingdronealarminformationis
+reported,whichincludesthedevice'slocationinformation.
+FieldNo. FieldName FieldCode DataType Remarks
+1 SerialNumber uav_sn String 
+2 DetectionTime record_datetime String YYYY-MM-DDHH:mm:ss
+3 DroneLongitude uav_lon double WGS84coordinatesystem
+4 DroneLatitude uav_lat double WGS84coordinatesystem
+5 Altitude uav_height float m/s
+6 HorizontalSpeed uav_v_hor float m/s
+7 PilotLongitude app_lon double WGS84coordinatesystem
+8 PilotLatitude app_lat double WGS84coordinatesystem
+9 DroneType uav_type String 
+10 DeviceLongitude dev_lon double Shoulderlighthasno
+GPS;thisvalueis0
+11 DeviceLatitude dev_lat double Shoulderlighthasno
+GPS;thisvalueis0
+12 FixedStation
+DeviceNamedev_name String 
+4.4DeviceConfiguration
+Deviceinformationconfigurationand4GmoduleconfigurationcanbeperformedviaAT
+commands.Fordetailedoperatinginstructions,pleasecontactoursalesortechnicalsupport
+team.

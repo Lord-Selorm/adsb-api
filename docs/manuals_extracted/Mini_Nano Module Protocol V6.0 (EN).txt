@@ -1,0 +1,449 @@
+=== Sheet: Main Structure ===
+									
+	Frame Type Table					Main Structure			
+	No.	Field Content	Data Type	Remarks		Field No.	Field Name	Field Code	Data Type
+	1	3	Decode Result	Server-initiated		1	Frame Type	frame_type	short
+						2	Frame Content	frame_info	Variable Type
+						{
+    "frame_type": 0, 
+    "frame_info": {}
+}			
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+=== Sheet: Decode Result ===
+																			
+	Frame ID 0x03																		
+	Field No.	Field Name	Field Code	Data Type	Remarks														
+	1	Detection Time	datetime	String	Not applicable to this module; defaults to empty														
+	2	Serial Number	serial_number	String															
+	3	Drone Longitude	longitude	double	WGS84 coordinate system														
+	4	Drone Latitude	latitude	double	WGS84 coordinate system														
+	5	Drone Height (AGL)	height	float	m														
+	6	Drone Altitude (MSL)	altitude	float	m														
+	7	Horizontal Speed	v_hor	float	m/s														
+	8	Vertical Speed	v_up	float	m/s														
+	9	Controller Station Longitude	app_lon	double	WGS84 coordinate system														
+	10	Controller Station Latitude	app_lat	double	WGS84 coordinate system														
+	11	Device Longitude	dev_lon	double	Not applicable to this module; defaults to empty														
+	12	Device Latitude	dev_lat	double	Not applicable to this module; defaults to empty														
+	13	Drone Type	uav_type	String															
+	14	Whitelist
+Match	has_allowlist	bool	Always false														
+	15	Registration Code (last 8 digits)	reg_code	String															
+	16	Heading Angle	angle	double															
+	17	Controller Station Altitude	app_alt	float	m														
+	18	Controller Station Type	app_type	int	Value range:
+0: Takeoff point location;
+1: Controller station location;
+255: Unknown;														
+	19	Drone Status	status	int	Value range:
+0: Not reported;
+1: On ground;
+2: In air;
+3: Civil UAV in emergency state;
+4: Remote ID transmission failure (civil UAV in non-emergency state);
+5: Remote ID transmission failure (civil UAV in emergency state);
+255: Unknown;														
+	20	Aviation Operation Category	sys_type	int	Value range:
+0: Undefined;
+1: Open category;
+2: Specific category;
+3: Certified category;
+255: Unknown;														
+	21	Aircraft Classification	weight	int	Value range:
+0: Micro UAV;
+1: Light UAV;
+2: Small UAV;
+3: Medium UAV;
+4: Large UAV;
+255: Unknown;														
+																			
+	{
+    "datetime": "", 
+    "serial_number": "SysSecWasHere ", 
+    "longitude": 0, 
+    "latitude": 0, 
+    "height": 0, 
+    "altitude":0,
+    "v_hor": 0, 
+    "v_up": 0, 
+    "app_lat": 51.447176178716916, 
+    "app_lon": 7.266528392911369, 
+    "dev_lat": 0, 
+    "dev_lon": 0, 
+    "uav_type": "DJI Mini4Pro", 
+    "has_allowlist": true,
+    "reg_code": "",
+    "angle": 0,
+    "app_alt": 0,
+    "app_type": 0,
+    "status": 0,
+    "sys_type": 0,
+    "weight": 0
+}																		
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			
+																			

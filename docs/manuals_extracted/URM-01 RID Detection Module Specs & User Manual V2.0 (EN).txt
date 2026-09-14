@@ -1,0 +1,79 @@
+URM-01RIDDetectionModuleSpecs&User
+ManualV2.0(EN)
+URM-01RIDDetectionModuleSpecificationsandUserManual
+1.ProductOverview
+TheURM-01droneRIDdetectionmodulereceivesanddecodesbroadcastmessagesignals
+transmittedremotelybydrones.Dronescompliantwiththefollowinginternationalstandards
+canbedetectedandidentified:ChinaNationalStandardsGB42590-2023andGB46750-2025;
+EuropeanstandardASD-STANDINEN4709-002;andU.S.ASTMRemoteIDstandardASTMF3411-
+2a-RID-BF3586-22.DetectionresultdataisoutputviatheType-CinterfaceorSH1.0_4pin
+connector.
+2.ProductAppearance
+Figure1:FrontView
+Figure2:RearView
+IPEXAntennaPort:Detectionantennaconnector.
+Type-CPort:Parseddataoutputanddevicepowerinput.
+SH1.0_4pinPort:Parseddataoutputanddevicepowerinput.
+Figure3:4-PinConnectorPinoutDefinition
+3.ProductSpecifications
+Item Specification
+OperatingMode PassiveDetection
+SupportedDrones DroneswithRemoteIDtransmission
+DetectionRange 1‒2km(open-fieldline-of-sightenvironment)
+OperatingFrequency 2.4GHz/5.8GHzdual-band
+CommunicationInterface StandardType-CandSH1.0_4pinconnectors,serial
+communication(customizable)
+Dimensions 27×24×7.5mm
+PowerInput Type-CorSH1.0_4pinconnector
+CommunicationPort Type-Cportwithbuilt-inCH340serial;SH1.0_4pinportisTTL
+serial
+OperatingVoltage 3.8‒6V,5Vrecommended
+BaudRate 115200
+OperatingTemperature −20°C~+60°C
+4.SerialPortOutputProtocol
+No. FieldName FieldCodeDataType Unit Remarks
+1 DetectionTime datetime String  Notapplicabletothis
+module;defaultsto
+empty
+2 DroneSerial
+Numberserial_numb
+erString  
+3 Drone
+Longitudelongitude float WGS84
+coordinate
+system
+4 DroneLatitude latitude float WGS84
+coordinate
+system
+5 DroneAltitude height float m 
+6 Drone
+Horizontal
+Speedv_hor float m/s 
+7 DroneVertical
+Speedv_up float m/s 
+8 PilotLongitude app_1at float WGS84
+coordinate
+system
+9 PilotLatitude app_1on float WGS84
+coordinate
+system
+10 Device
+Longitudedev_1at float  Notapplicabletothis
+module;defaultsto
+empty
+11 DeviceLatitude dev_1on float  Notapplicabletothis
+module;defaultsto
+empty
+12 DroneModel uav_type String  
+5.UsageGuide
+(1)ConnectthemoduletoacomputerusinganSH1.0_4pin-to-USBadapteroraType-C-to-
+USBcable.InDeviceManager,confirmtheCOMportnumber(e.g.,COM8USB-SERIALCH340).If
+thedeviceisnotrecognized,installtheCH340driver(availablefromourtechnicalsupportteam,
+ordownloadtheCH340driverinstallerfromhttps://espjs.cn/driver).
+(2)Openaserialportdebuggingutility,selectthecorrespondingCOMport,setthebaud
+rateto115200,andopentheserialport.AsshowninFigures4and5below.
+Figure4:SH1.0_4pin-to-ComputerConnectionDiagram
+Figure5:BaudRateSetting
+(3)PoweronadronewithRemoteIDtransmission(forDJIdrones,thepropellersmustbe
+spinning).TheoutputshowninFigure6willappearintheserialportdebuggingutility.
+Figure6:SerialPortOutput
