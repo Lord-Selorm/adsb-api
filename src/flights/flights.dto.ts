@@ -54,3 +54,103 @@ export class FlightSummaryDto {
   @ApiProperty({ description: 'Number of stored messages for this aircraft' })
   message_count: number;
 }
+
+export class DronePositionDto {
+  @ApiProperty({ description: 'Time the position was stored (UTC)' })
+  time: Date;
+
+  @ApiProperty({ description: 'Drone serial number (Remote ID)' })
+  serial_number: string;
+
+  @ApiPropertyOptional({ description: 'Latitude (deg, WGS84)', nullable: true })
+  latitude?: number | null;
+
+  @ApiPropertyOptional({ description: 'Longitude (deg, WGS84)', nullable: true })
+  longitude?: number | null;
+
+  @ApiPropertyOptional({ description: 'Height above ground (m)', nullable: true })
+  height?: number | null;
+
+  @ApiPropertyOptional({
+    description: 'Altitude above mean sea level (m)',
+    nullable: true,
+  })
+  altitude?: number | null;
+
+  @ApiPropertyOptional({ description: 'Horizontal speed (m/s)', nullable: true })
+  v_hor?: number | null;
+
+  @ApiPropertyOptional({ description: 'Vertical speed (m/s)', nullable: true })
+  v_up?: number | null;
+
+  @ApiPropertyOptional({ description: 'Reported drone model', nullable: true })
+  uav_type?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Pilot/controller longitude (deg)',
+    nullable: true,
+  })
+  app_lon?: number | null;
+
+  @ApiPropertyOptional({
+    description: 'Pilot/controller latitude (deg)',
+    nullable: true,
+  })
+  app_lat?: number | null;
+
+  @ApiPropertyOptional({
+    description: 'Pilot/controller altitude (m)',
+    nullable: true,
+  })
+  app_alt?: number | null;
+
+  @ApiPropertyOptional({
+    description: 'Controller station type (0 takeoff point, 1 controller)',
+    nullable: true,
+  })
+  app_type?: number | null;
+
+  @ApiPropertyOptional({
+    description: 'Registration code (last 8 digits)',
+    nullable: true,
+  })
+  reg_code?: string | null;
+
+  @ApiPropertyOptional({ description: 'Heading angle (deg)', nullable: true })
+  angle?: number | null;
+
+  @ApiPropertyOptional({ description: 'Drone RID status code', nullable: true })
+  status?: number | null;
+
+  @ApiPropertyOptional({
+    description: 'Aviation operation category (0-3, 255 unknown)',
+    nullable: true,
+  })
+  sys_type?: number | null;
+
+  @ApiPropertyOptional({
+    description: 'Aircraft classification (0-4, 255 unknown)',
+    nullable: true,
+  })
+  weight?: number | null;
+
+  @ApiPropertyOptional({
+    description: 'Whitelist / allowlist match',
+    nullable: true,
+  })
+  has_allowlist?: boolean | null;
+}
+
+export class DroneFlightSummaryDto {
+  @ApiProperty({ description: 'Drone serial number (Remote ID)' })
+  serial_number: string;
+
+  @ApiPropertyOptional({ description: 'First message time (UTC)', nullable: true })
+  first_seen?: Date | null;
+
+  @ApiPropertyOptional({ description: 'Last message time (UTC)', nullable: true })
+  last_seen?: Date | null;
+
+  @ApiProperty({ description: 'Number of stored positions for this drone' })
+  message_count: number;
+}

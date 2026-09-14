@@ -347,6 +347,29 @@ Returns an array of position rows: `time`, `icao`, `callsign`, `latitude`, `long
 
 Total number of rows stored in `aircraft_positions`.
 
+### Drone Remote ID history (`/api/flights/drones/*`)
+
+The same persistence pipeline saves **Drone Remote ID reports** into a `drone_positions` hypertable (one row per decoded `frame_type:0x03` state change). Queries mirror the aircraft endpoints but key on the drone serial number:
+
+| Endpoint | Description |
+| --- | --- |
+| `GET /api/flights/drones/list?from=&to=&limit=` | Distinct drones seen within a time range — `serial_number`, `first_seen`, `last_seen`, `message_count` |
+| `GET /api/flights/drones/positions/:serial?from=&to=` | Full position history for one drone — WGS84 lat/lon, height, altitude, `v_hor`/`v_up`, `uav_type`, pilot (`app_*`) position, envelope fields |
+| `GET /api/flights/drones/count` | Total rows stored in `drone_positions` |
+
+Example drone flight summary:
+
+```json
+[
+  {
+    "serial_number": "A1B2C3D4",
+    "first_seen": "2026-09-14T10:00:00.000Z",
+    "last_seen": "2026-09-14T10:12:42.000Z",
+    "message_count": "483"
+  }
+]
+```
+
 ## WebSocket
 
 A Socket.IO server runs alongside HTTP at `/socket.io` (namespace `/`). Connect with any Socket.IO client:
@@ -428,17 +451,18 @@ FramingDetector ── Beast / AVR / raw hex      RidDecoder ── JSON line ->
    │  frames (14-byte / 7-byte)                │
    ▼                                          ▼
 ModeSDecoder ── CRC24, DF/ICAO,              DroneRidStoreService ── per-serial Map
-   AC12 altitude, velocity, callsign          (60s eviction, 15s stale, events)
-   │  DecodedMessage{...}                      │
-   ▼                                          │
-AircraftStoreService ── per-ICAO CprTracker ──┤
-   (60s eviction, 15s stale, events)          │
-   ▼                                          ▼
+    AC12 altitude, velocity, callsign          (60s eviction, 15s stale, events)
+    │  DecodedMessage{...}                      │           │
+    ▼                                          │           ▼
+AircraftStoreService ── per-ICAO CprTracker ──┤           FlightsService
+    (60s eviction, 15s stale, events)          │           drone_positions (batch flush)
+    ▼                                          │
+    ▼                                          ▼
 TrackStoreService ─── merges both sources, tags each track with `source`
-   │
-   ▼
+    │
+    ▼
 Serving layer ────── REST (TracksController, AircraftController, HealthController)
-                  └─ WebSocket (TracksGateway → Socket.IO)
+                   └─ WebSocket (TracksGateway → Socket.IO)
 ```
 
 Each sensor (ADS-B now, Drone RID now, AIS later) keeps its own transport + decode + store behind the `DataSource` contract; `TrackStoreService` is the single merged view the API and WebSocket layer read from.
@@ -452,19 +476,19 @@ AppModule ── imports ──────────────────�
    ├─ RidModule      (src/rid)             ├─ RID decoder + RID transport factory (mock | UDP)
    ├─ AircraftModule (src/aircraft)        ├─ AircraftStoreService + REST (/api/aircraft)
    ├─ TracksModule   (src/tracks)          ├─ TrackStoreService + /api/tracks + WebSocket gateway
-   └─ FlightsModule  (src/flights)         └─ FlightsService (Drizzle) + /api/flights
+   ├─ FlightsModule  (src/flights)         └─ FlightsService (Drizzle) + /api/flights (+ drone history)
 ```
 
 Each module owns its files and exports only what consumers need; the decode layer is **not** scattered across modules anymore (`ModeSDecoder` lives in `DecodeModule` and is imported by the ingress pipeline, health checks, and tests). Folders mirror the API surface: `/api/aircraft` → `src/aircraft`, `/api/tracks` → `src/tracks`, Drone Remote ID ingestion → `src/rid`.
 
 ## TimescaleDB (in-house, Dockerized)
 
-The data **continuously saves** into TimescaleDB. The API reads every decoded aircraft update and writes it to a time-series table (`aircraft_positions`), so history is **never lost on refresh**. No one needs to access the database directly — they just use the API, which now returns both **realtime** and **stored** data.
+The data **continuously saves** into TimescaleDB. The API writes every decoded update — ADS-B aircraft **and** Drone Remote ID reports — to time-series tables (`aircraft_positions` for planes, `drone_positions` for drones), so history is **never lost on refresh**. No one needs to access the database directly — they just use the API, which now returns both **realtime** and **stored** data.
 
 - Uses the official **`timescale/timescaledb`** Docker image (TimescaleDB, not plain Postgres → real hypertable).
-- DB layer uses **Drizzle ORM** (`src/flights/schema.ts`) — typed schema, migrations via `npm run db:generate` / `npm run db:push`.
+- DB layer uses **Drizzle ORM** (`src/flights/schema.ts`) — typed schemas for `aircraft_positions` and `drone_positions`, migrations via `npm run db:generate` / `npm run db:push`.
 - Runs fully **in-house** on the company's own infrastructure — no cloud.
-- `aircraft_positions` table/hypertable creates automatically on first boot; rows batch-flush every 5s or every 200 records.
+- Both tables/hypertables create automatically on first boot; rows batch-flush every 5s or every 200 records.
 
 ### Full in-house deployment (API + TimescaleDB together)
 
@@ -505,4 +529,10 @@ GROUP BY icao ORDER BY 2 DESC;
 -- Downsample: positions per 10-minute bucket
 SELECT time_bucket('10 minutes', time) AS bucket, icao, COUNT(*)
 FROM aircraft_positions GROUP BY bucket, icao ORDER BY bucket;
+
+-- Recent drone reports for a serial (drone_positions table)
+SELECT serial_number, time, latitude, longitude, height, v_hor, uav_type
+FROM drone_positions
+WHERE serial_number = 'A1B2C3D4' AND time > now() - interval '1 hour'
+ORDER BY time;
 ```

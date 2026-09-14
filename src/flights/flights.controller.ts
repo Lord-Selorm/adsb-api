@@ -1,6 +1,11 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { FlightSummaryDto, PositionDto } from './flights.dto.js';
+import {
+  DroneFlightSummaryDto,
+  DronePositionDto,
+  FlightSummaryDto,
+  PositionDto,
+} from './flights.dto.js';
 import { FlightsService } from './flights.service.js';
 
 @ApiTags('flights')
@@ -47,5 +52,50 @@ export class FlightsController {
   @ApiOkResponse({ schema: { type: 'number' }, description: 'Row count' })
   count(): Promise<number> {
     return this.flights.queryPositionCount();
+  }
+
+  @Get('drones/positions/:serial')
+  @ApiOperation({ summary: 'Position history for one drone within a time range' })
+  @ApiOkResponse({
+    type: [DronePositionDto],
+    description: 'Stored drone position rows',
+  })
+  dronePositions(
+    @Param('serial') serial: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ): Promise<DronePositionDto[]> {
+    const now = Date.now();
+    const toDate = to ? new Date(to) : new Date(now);
+    const fromDate = from ? new Date(from) : new Date(now - 3600_000);
+    return this.flights.queryDronePositions(serial, fromDate, toDate);
+  }
+
+  @Get('drones/list')
+  @ApiOperation({ summary: 'Distinct drones seen within a time range' })
+  @ApiOkResponse({
+    type: [DroneFlightSummaryDto],
+    description: 'Drone flight summary list',
+  })
+  droneList(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('limit') limit?: string,
+  ): Promise<DroneFlightSummaryDto[]> {
+    const now = Date.now();
+    const toDate = to ? new Date(to) : new Date(now);
+    const fromDate = from ? new Date(from) : new Date(now - 3600_000);
+    return this.flights.queryDroneFlights(
+      fromDate,
+      toDate,
+      limit ? Number(limit) : 100,
+    );
+  }
+
+  @Get('drones/count')
+  @ApiOperation({ summary: 'Total rows stored in drone_positions' })
+  @ApiOkResponse({ schema: { type: 'number' }, description: 'Drone row count' })
+  droneCount(): Promise<number> {
+    return this.flights.queryDronePositionCount();
   }
 }
