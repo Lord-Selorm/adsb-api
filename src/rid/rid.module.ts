@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { RidMockTransport } from '../ingress/transports/rid-mock.transport.js';
-import { RidUdpTransport } from '../ingress/transports/rid-udp.transport.js';
+import { RidMockTransport } from './transports/rid-mock.transport.js';
+import { RidUdpTransport } from './transports/rid-udp.transport.js';
 import { DroneRidStoreService } from './drone-rid-store.service.js';
 import { RidDecoder } from './rid.decoder.js';
 import { RidIngressService } from './rid.ingress.service.js';

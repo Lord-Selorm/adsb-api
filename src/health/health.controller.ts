@@ -1,7 +1,7 @@
 import { Controller, Get, Inject } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ModeSDecoder } from '../decode/mode-s.decoder.js';
-import type { DataSource } from '../ingress/data-source.interface.js';
+import type { DataSource } from '../common/data-source.interface.js';
 import { TRANSPORT_TOKEN } from '../ingress/transport.token.js';
 import { RID_TRANSPORT_TOKEN } from '../rid/rid.transport.token.js';
 import { TrackStoreService } from '../tracks/track-store.service.js';

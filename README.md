@@ -473,13 +473,25 @@ Each sensor (ADS-B now, Drone RID now, AIS later) keeps its own transport + deco
 AppModule ── imports ───────────────────────┐
    ├─ DecodeModule   (src/decode)          ├─ ModeSDecoder (shared, single instance)
    ├─ IngressModule  (src/ingress)         ├─ ADS-B transport factory (serial|tcp|mock)
-   ├─ RidModule      (src/rid)             ├─ RID decoder + RID transport factory (mock | UDP)
    ├─ AircraftModule (src/aircraft)        ├─ AircraftStoreService + REST (/api/aircraft)
+   ├─ RidModule      (src/rid)             ├─ RID decoder + RID transports (mock | UDP) + store
    ├─ TracksModule   (src/tracks)          ├─ TrackStoreService + /api/tracks + WebSocket gateway
-   ├─ FlightsModule  (src/flights)         └─ FlightsService (Drizzle) + /api/flights (+ drone history)
+   ├─ FlightsModule  (src/flights)         ├─ FlightsService (Drizzle) + /api/flights (+ drone history)
+   └─ HealthModule   (src/health)          └─ /api/health (own module like every feature)
 ```
 
-Each module owns its files and exports only what consumers need; the decode layer is **not** scattered across modules anymore (`ModeSDecoder` lives in `DecodeModule` and is imported by the ingress pipeline, health checks, and tests). Folders mirror the API surface: `/api/aircraft` → `src/aircraft`, `/api/tracks` → `src/tracks`, Drone Remote ID ingestion → `src/rid`.
+Each module owns its files and exports only what consumers need. Every sensor
+owns its **whole** footprint: ADS-B capture lives in `src/ingress` (transports
++ framing + pipeline) with the live store in `src/aircraft`; Drone Remote ID
+keeps **everything** — decoder, transports (`src/rid/transports/`), ingress
+pipeline and store — under `src/rid`. Both sensors share one byte-stream
+contract, `src/common/data-source.interface.ts`, injected via
+`TRANSPORT_TOKEN` (ADS-B) and `RID_TRANSPORT_TOKEN` (drones). Global settings
+live in `src/bootstrap.ts` (CORS, `/api` prefix, Swagger). Folders mirror the
+API surface: `/api/aircraft` → `src/aircraft`, `/api/tracks` → `src/tracks`,
+Drone Remote ID ingestion → `src/rid`.
+
+New to the codebase? Start with [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## TimescaleDB (in-house, Dockerized)
 

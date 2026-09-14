@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AircraftModule } from './aircraft/aircraft.module.js';
 import { DecodeModule } from './decode/decode.module.js';
 import { FlightsModule } from './flights/flights.module.js';
-import { HealthController } from './health/health.controller.js';
+import { HealthModule } from './health/health.module.js';
 import { IngressModule } from './ingress/ingress.module.js';
 import { RidModule } from './rid/rid.module.js';
 import { TracksModule } from './tracks/tracks.module.js';
@@ -17,7 +17,7 @@ import { TracksModule } from './tracks/tracks.module.js';
     TracksModule,
     RidModule,
     FlightsModule,
+    HealthModule,
   ],
-  controllers: [HealthController],
 })
 export class AppModule {}

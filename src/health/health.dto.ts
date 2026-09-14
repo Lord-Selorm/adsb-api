@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import type { DataSourceKind } from '../ingress/data-source.interface.js';
+import type { DataSourceKind } from '../common/data-source.interface.js';
 
 export class HealthStatusDto {
   @ApiProperty({ description: 'Always "ok" when the process is alive' })

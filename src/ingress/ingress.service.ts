@@ -9,7 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { ModeSDecoder } from '../decode/mode-s.decoder.js';
 import type { ParsedFrame } from './framing/framing.types.js';
 import { FramingDetector } from './framing/framing.detector.js';
-import type { DataSource } from './data-source.interface.js';
+import type { DataSource } from '../common/data-source.interface.js';
 import { TRANSPORT_TOKEN } from './transport.token.js';
 import { TrackStoreService } from '../tracks/track-store.service.js';
 

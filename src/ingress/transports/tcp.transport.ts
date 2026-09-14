@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import net from 'node:net';
-import type { DataSource, DataSourceKind } from '../data-source.interface.js';
+import type { DataSource, DataSourceKind } from '../../common/data-source.interface.js';
 
 /**
  * Streams data from a USR-TCP232-ED2 (or any TCP serial bridge) that has the

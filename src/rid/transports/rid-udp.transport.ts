@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { Socket } from 'node:dgram';
 import { createSocket } from 'node:dgram';
-import type { DataSource, DataSourceKind } from '../data-source.interface.js';
+import type { DataSource, DataSourceKind } from '../../common/data-source.interface.js';
 
 /**
  * Physical URM-01/02 Drone RID receiver over UDP (default 0.0.0.0:65100).

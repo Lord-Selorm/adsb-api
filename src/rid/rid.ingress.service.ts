@@ -5,7 +5,7 @@ import {
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
-import type { DataSource } from '../ingress/data-source.interface.js';
+import type { DataSource } from '../common/data-source.interface.js';
 import { DroneRidStoreService } from './drone-rid-store.service.js';
 import { RidDecoder } from './rid.decoder.js';
 import { RID_TRANSPORT_TOKEN } from './rid.transport.token.js';

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { DataSource, DataSourceKind } from '../data-source.interface.js';
+import type { DataSource, DataSourceKind } from '../../common/data-source.interface.js';
 
 interface MockDrone {
   serial_number: string;

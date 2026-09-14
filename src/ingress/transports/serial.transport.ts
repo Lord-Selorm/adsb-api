@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SerialPort } from 'serialport';
-import type { DataSource, DataSourceKind } from '../data-source.interface.js';
+import type { DataSource, DataSourceKind } from '../../common/data-source.interface.js';
 
 export interface SerialTransportOptions {
   path: string;
