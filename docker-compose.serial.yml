@@ -1,0 +1,20 @@
+# Optional USB-serial passthrough for the RID and AIS hardware transports.
+#
+# The base docker-compose.yml deliberately omits `devices:` mapping because a
+# missing host device path makes `docker compose up` fail. Include this file
+# ONLY on hosts with the receivers physically attached:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.serial.yml up -d
+#
+# Linux host: the URM-02's CH340 usually enumerates as /dev/ttyUSB0 and the
+# AIS receiver as /dev/ttyUSB1. Override RID_HOST_DEVICE / AIS_HOST_DEVICE if
+# your host uses different names (e.g. /dev/ttyACM0).
+#
+# Note: Windows Docker Desktop does NOT support device passthrough — use the
+# UDP path for the URM-02 there, or run the API directly on the host.
+
+services:
+  api:
+    devices:
+      - "${RID_HOST_DEVICE:-/dev/ttyUSB0}:/dev/ttyUSB0"
+      - "${AIS_HOST_DEVICE:-/dev/ttyUSB1}:/dev/ttyUSB1"

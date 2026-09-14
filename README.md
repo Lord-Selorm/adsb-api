@@ -145,7 +145,31 @@ All routes are prefixed with `/api`.
 | --- | --- |
 | `?source=adsb` | ADS-B aircraft only |
 | `?source=drone_rid` | Drones only |
-| *(omitted)* | Combined, both sources |
+| `?source=ais` | AIS vessels only |
+| *(omitted)* | Combined, all sources |
+
+
+### AIS Support
+
+The API now includes **Automatic Identification System (AIS)** support for tracking vessels. See the full guide: [AIS Support Documentation](docs/ais-support.md).
+
+#### Environment variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AIS_USE_MOCK` | `true` | Set to `false` to use a real AIS serial port or UDP source. |
+| `AIS_SERIAL_PORT` | `COM4` | Serial port for AIS receiver (if not using mock). |
+| `AIS_SERIAL_BAUD` | `38400` | Baud rate for AIS serial connection. |
+| `AIS_MOCK_TICK_MS` | `1000` | Mock emission interval in ms. |
+| `AIS_STALE_MS` | `15000` | Milliseconds of silence before a vessel is marked stale. |
+| `AIS_EVICT_MS` | `60000` | Milliseconds of silence before a vessel is evicted from the store. |
+
+#### New API endpoints
+
+- `GET /api/vessels` – List all AIS vessels (merged with other sources via `/api/tracks?source=ais`).
+- `GET /api/vessels/:mmsi` – Retrieve details for a specific vessel by its MMSI.
+
+These endpoints are also available through the unified `/api/tracks` endpoint with the query parameter `?source=ais`.
 
 ```json
 {
@@ -516,6 +540,13 @@ docker compose up -d --build
 ```
 
 The API container starts only after TimescaleDB is healthy, then continuously saves incoming data into it. Data persists in the `adsb_pgdata` volume (survives container restarts).
+
+The container receives the Drone RID stream over UDP (`65100/udp` published). To pass real USB-serial receivers through to the container (URM-02 Type-C on `/dev/ttyUSB0`, AIS receiver on `/dev/ttyUSB1`), add the `docker-compose.serial.yml` override **only on hosts where the hardware is physically attached** — the base compose intentionally has no `devices:` mapping so `up` never fails on a missing path:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.serial.yml up -d --build
+# Override host device names if different, e.g. RID_HOST_DEVICE=/dev/ttyACM0
+```
 
 ### Database-only (if the API runs outside Docker)
 

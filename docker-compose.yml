@@ -34,6 +34,8 @@ services:
         condition: service_healthy
     ports:
       - "${PORT:-3000}:3000"
+      # URM-01/02 Drone RID heartbeat UDP stream (Ethernet path).
+      - "${RID_UDP_PORT:-65100}:${RID_UDP_PORT:-65100}/udp"
     environment:
       # Point the API at the TimescaleDB container (service name = hostname).
       DATABASE_URL: postgres://${POSTGRES_USER:-adsb}:${POSTGRES_PASSWORD}@timescaledb:5432/${POSTGRES_DB:-adsb}
@@ -42,6 +44,24 @@ services:
       TCP_PORT: ${TCP_PORT:-8235}
       RECEIVER_LAT: ${RECEIVER_LAT:-52}
       RECEIVER_LON: ${RECEIVER_LON:-4}
+      # --- Drone Remote ID (URM-01/02) ---
+      RID_USE_MOCK: ${RID_USE_MOCK:-false}
+      RID_TRANSPORT: ${RID_TRANSPORT:-dual}
+      RID_UDP_HOST: ${RID_UDP_HOST:-0.0.0.0}
+      RID_UDP_PORT: ${RID_UDP_PORT:-65100}
+      RID_SERIAL_PORT: ${RID_SERIAL_PORT:-/dev/ttyUSB0}
+      RID_SERIAL_BAUD: ${RID_SERIAL_BAUD:-115200}
+      RID_STALE_MS: ${RID_STALE_MS:-15000}
+      RID_EVICT_MS: ${RID_EVICT_MS:-60000}
+      RID_SCAN_MS: ${RID_SCAN_MS:-10000}
+      # --- AIS Maritime (AERA Sentinel FST-1 VHF receiver) ---
+      AIS_USE_MOCK: ${AIS_USE_MOCK:-true}
+      AIS_MOCK_TICK_MS: ${AIS_MOCK_TICK_MS:-2000}
+      AIS_SERIAL_PORT: ${AIS_SERIAL_PORT:-/dev/ttyUSB1}
+      AIS_SERIAL_BAUD: ${AIS_SERIAL_BAUD:-38400}
+      AIS_STALE_MS: ${AIS_STALE_MS:-300000}
+      AIS_EVICT_MS: ${AIS_EVICT_MS:-1800000}
+      AIS_SCAN_MS: ${AIS_SCAN_MS:-15000}
     # The API needs to reach the receiver on the LAN. If the receiver is on the
     # host's network, allow it. Add ports for a serial device if needed.
     extra_hosts:
