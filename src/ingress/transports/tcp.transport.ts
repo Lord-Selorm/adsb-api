@@ -18,7 +18,7 @@ export class TcpTransport implements DataSource {
   private errorListeners: Array<(err: Error) => void> = [];
   private socket: net.Socket | null = null;
   private reconnectAttempts = 0;
-  private readonly maxReconnectAttempts = 10;
+  private readonly maxReconnectAttempts: number;
   private lastMessageAt: number = Date.now();
   private readonly host: string;
   private readonly port: number;
@@ -29,6 +29,9 @@ export class TcpTransport implements DataSource {
     this.port = Number(config.get<string>('TCP_PORT') ?? '8235');
     this.reconnectDelayMs = Number(
       config.get<string>('TCP_RECONNECT_MS') ?? '1000',
+    );
+    this.maxReconnectAttempts = Number(
+      config.get<string>('TCP_MAX_RECONNECT_ATTEMPTS') ?? '10',
     );
   }
 
@@ -48,6 +51,7 @@ export class TcpTransport implements DataSource {
     this.socket.on('connect', () => {
       this.isConnected = true;
       this.reconnectAttempts = 0;
+      this.socket?.setKeepAlive(true, 5000);
       this.logger.log(`TCP connected: ${this.host}:${this.port}`);
     });
 
@@ -71,11 +75,14 @@ export class TcpTransport implements DataSource {
   private handleDisconnect(): void {
     this.isConnected = false;
     this.socket = null;
+    const unlimited =
+      this.maxReconnectAttempts < 0 || !Number.isFinite(this.maxReconnectAttempts);
     this.reconnectAttempts++;
-    if (this.reconnectAttempts <= this.maxReconnectAttempts) {
+    if (unlimited || this.reconnectAttempts <= this.maxReconnectAttempts) {
+      const delay = this.reconnectDelayMs * Math.min(Math.pow(2, this.reconnectAttempts - 1), 16);
       setTimeout(() => {
         this.connect().catch(() => {});
-      }, this.reconnectDelayMs);
+      }, delay);
     } else {
       this.logger.warn('Maximum TCP reconnect attempts reached; giving up.');
     }
