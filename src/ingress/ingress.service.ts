@@ -15,11 +15,11 @@ import { TRANSPORT_TOKEN } from './transport.token.js';
 
 /**
  * Ingress pipeline: DataSource bytes -> FramingDetector -> ModeSDecoder ->
- * AircraftStoreService. Transport selection is decided by the `USE_MOCK` flag
- * in IngressModule (`true` = mock simulator, `false` = real ADSR-800 serial;
- * TCP/UDP are future slots behind the same DataSource contract). Writes go
- * straight to the aircraft store; the track store/fights persistence pick it
- * up through the SENSOR_SOURCES registry.
+ * AircraftStoreService. Transport selection is decided in IngressModule: TCP
+ * serial bridge when `TCP_PORT` is configured, else the direct serial port —
+ * both behind the same DataSource contract. Writes go straight to the aircraft
+ * store; the track store/flights persistence pick it up through the
+ * SENSOR_SOURCES registry.
  */
 @Injectable()
 export class IngressService implements OnModuleInit, OnModuleDestroy {

@@ -3,7 +3,7 @@ import { cprNL } from '../../decode/cpr.js';
 import { crc24 } from '../../decode/checksum.js';
 
 /**
- * Encodes DF17 frames with a valid CRC24 (backstop-field) so the mock feed is
+ * Encodes DF17 frames with a valid CRC24 (backstop-field) so test fixtures are
  * indistinguishable from real device output once parsed.
  *
  * Bit indices are absolute within the 112-bit frame and mirror

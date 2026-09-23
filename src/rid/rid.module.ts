@@ -6,7 +6,6 @@ import {
   type SensorSourceDescriptor,
 } from '../sensors/sensor-source.js';
 import { createDroneSource } from '../sensors/source-meta.js';
-import { RidMockTransport } from './transports/rid-mock.transport.js';
 import { RidUdpTransport } from './transports/rid-udp.transport.js';
 import { RidSerialTransport } from './transports/rid-serial.transport.js';
 import { RidDualTransport } from './transports/rid-dual.transport.js';
@@ -36,18 +35,6 @@ import { RID_TRANSPORT_TOKEN } from './rid.transport.token.js';
       provide: RID_TRANSPORT_TOKEN,
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const useMock = config
-          .get<string>('RID_USE_MOCK', 'true')
-          .toLowerCase();
-        if (useMock === 'true') {
-          return new RidMockTransport({
-            receiverLat: Number(config.get('RECEIVER_LAT', '52')),
-            receiverLon: Number(config.get('RECEIVER_LON', '4')),
-            droneCount: Number(config.get('RID_MOCK_DRONES', '3')),
-            tickMs: Number(config.get('RID_MOCK_TICK_MS', '1000')),
-          });
-        }
-
         const transportMode = config
           .get<string>('RID_TRANSPORT', 'dual')
           .toLowerCase();

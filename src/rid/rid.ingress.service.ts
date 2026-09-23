@@ -12,8 +12,8 @@ import { RID_TRANSPORT_TOKEN } from './rid.transport.token.js';
 
 /**
  * Drone Remote ID ingress pipeline: RID DataSource bytes (JSON lines) ->
- * RidDecoder -> DroneRidStore. Reuses the DataSource contract so serial/TCP
- * feeds slot in behind the same interface (mock today).
+ * RidDecoder -> DroneRidStore. Reuses the DataSource contract so the UDP,
+ * serial and dual transports all slot in behind the same interface.
  */
 @Injectable()
 export class RidIngressService implements OnModuleInit, OnModuleDestroy {

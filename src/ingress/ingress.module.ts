@@ -16,7 +16,6 @@ import {
 import { createAircraftSource } from '../sensors/source-meta.js';
 import { TRANSPORT_TOKEN } from './transport.token.js';
 import { SerialTransport } from './transports/serial.transport.js';
-import { MockTransport } from './transports/mock.transport.js';
 import { TcpTransport } from './transports/tcp.transport.js';
 
 @Module({
@@ -26,15 +25,6 @@ import { TcpTransport } from './transports/tcp.transport.js';
     {
       provide: TRANSPORT_TOKEN,
       useFactory: (config: ConfigService) => {
-        const useMock = config.get<string>('USE_MOCK', 'true').toLowerCase();
-        if (useMock === 'true') {
-          return new MockTransport({
-            receiverLat: Number(config.get('RECEIVER_LAT', '52')),
-            receiverLon: Number(config.get('RECEIVER_LON', '4')),
-            aircraftCount: Number(config.get('MOCK_AIRCRAFT', '8')),
-            tickMs: Number(config.get('MOCK_TICK_MS', '1000')),
-          });
-        }
         // TCP serial bridge (e.g. USR-TCP232-ED2) when a port is configured.
         if (Number(config.get<string>('TCP_PORT', '0')) > 0) {
           return new TcpTransport(config);

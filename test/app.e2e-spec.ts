@@ -18,12 +18,12 @@ describe('App (e2e)', () => {
     await app.init();
   });
 
-  it('/api/health (GET) reports an ok service backed by the mock feed', async () => {
+  it('/api/health (GET) reports an ok service', async () => {
     const res = await request(app.getHttpServer())
       .get('/api/health')
       .expect(200);
     expect(res.body.status).toBe('ok');
-    expect(res.body.source).toBe('mock');
+    expect(typeof res.body.source).toBe('string');
     expect(typeof res.body.trackedAircraft).toBe('number');
   });
 

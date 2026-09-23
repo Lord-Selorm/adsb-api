@@ -1,7 +1,7 @@
 /**
  * Mode S CRC24 parity table (dump1090 / pyModeS algorithm, polynomial
  * 0xFF409). Entry j is the parity contribution of bit j. Shared by the
- * decoder (validation) and the frame builder (mock feed generation) so the
+ * decoder (validation) and the frame builder (test frame generation) so the
  * two can never drift apart.
  */
 export const CHECKSUM_TABLE: readonly number[] = [

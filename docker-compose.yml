@@ -46,13 +46,11 @@ services:
       INFLUX_TOKEN: ${INFLUX_TOKEN:?set INFLUX_TOKEN}
       INFLUX_ORG: ${INFLUX_ORG:-adsb}
       INFLUX_BUCKET: ${INFLUX_BUCKET:-adsb}
-      USE_MOCK: ${USE_MOCK:-false}
       TCP_HOST: ${TCP_HOST:?ADSR-800/serial-bridge IP (e.g. 192.168.0.7)}
       TCP_PORT: ${TCP_PORT:-8235}
       RECEIVER_LAT: ${RECEIVER_LAT:-52}
       RECEIVER_LON: ${RECEIVER_LON:-4}
       # --- Drone Remote ID (URM-01/02) ---
-      RID_USE_MOCK: ${RID_USE_MOCK:-false}
       RID_TRANSPORT: ${RID_TRANSPORT:-dual}
       RID_UDP_HOST: ${RID_UDP_HOST:-0.0.0.0}
       RID_UDP_PORT: ${RID_UDP_PORT:-65100}
@@ -62,9 +60,7 @@ services:
       RID_EVICT_MS: ${RID_EVICT_MS:-60000}
       RID_SCAN_MS: ${RID_SCAN_MS:-10000}
       # --- AIS Maritime (AERA Sentinel FST-1 VHF receiver) ---
-      AIS_USE_MOCK: ${AIS_USE_MOCK:-true}
       AIS_TRANSPORT: ${AIS_TRANSPORT:-serial}
-      AIS_MOCK_TICK_MS: ${AIS_MOCK_TICK_MS:-2000}
       AIS_SERIAL_PORT: ${AIS_SERIAL_PORT:-/dev/ttyUSB1}
       AIS_SERIAL_BAUD: ${AIS_SERIAL_BAUD:-38400}
       AIS_UDP_HOST: ${AIS_UDP_HOST:-0.0.0.0}

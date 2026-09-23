@@ -1,22 +1,19 @@
 export type DataSourceKind =
   | 'serial'
-  | 'mock'
   | 'tcp'
   | 'udp'
-  | 'rid_mock'
   | 'rid_udp'
   | 'rid_serial'
   | 'rid_dual'
-  | 'ais_mock'
   | 'ais_serial'
   | 'ais_tcp'
   | 'ais_udp';
 
 /**
- * Abstraction over a raw byte feed from an ADS-B receiver.
- * Serial (ADSR-800 via DB9) is the primary transport today; TCP/UDP
- * (RJ45/4G ground receiver) and the mock simulator slot in behind the same
- * contract so nothing downstream changes.
+ * Abstraction over a raw byte feed from a receiver.
+ * Serial (ADSR-800 via DB9) is the primary ADS-B transport today; TCP/UDP
+ * (RJ45/4G ground receiver) slots in behind the same contract so nothing
+ * downstream changes.
  */
 export interface DataSource {
   readonly kind: DataSourceKind;

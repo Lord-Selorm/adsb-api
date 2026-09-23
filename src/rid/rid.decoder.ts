@@ -33,11 +33,11 @@ function pick(
 /**
  * Parses URM Drone Remote ID reports (JSON lines) into DroneRidState.
  * Accepts either the protocol envelope ({ frame_type, frame_info }) or a
- * bare drone object, so the mock and serial/TCP/UDP feeds share one parser.
+ * bare drone object, so the UDP/serial feeds share one parser.
  * Field names are read with Mini/Nano aliases first, then the URM-02 manual
- * names (uav_sn, uav_lon, uav_lat, uav_height, uav_v_hor) so both the mock
- * feed and the physical module decode identically. frame_type 7 device GNSS
- * heartbeats (no serial_number) are intentionally ignored.
+ * names (uav_sn, uav_lon, uav_lat, uav_height, uav_v_hor) so every transport
+ * decodes identically. frame_type 7 device GNSS heartbeats (no serial_number)
+ * are intentionally ignored.
  */
 export class RidDecoder {
   private readonly logger = new Logger(RidDecoder.name);

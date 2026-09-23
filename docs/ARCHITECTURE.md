@@ -56,7 +56,7 @@ src/
 │   ├── ingress.module.ts      Chooses the ADS-B transport from config.
 │   ├── ingress.service.ts     bytes -> framing -> Mode-S decode -> store.
 │   ├── framing/               Turns raw byte streams into 112-bit frames.
-│   └── transports/            serial / tcp / mock implementations.
+│   └── transports/            serial / tcp implementations.
 │
 ├── decode/                    Mode-S / ADS-B math (shared library).
 │   └── mode-s.decoder.ts      Frame → aircraft state (callsign, lat/lon…).
@@ -65,18 +65,18 @@ src/
 │   └── aircraft-store.service.ts   In-memory per-ICAO track of every plane.
 │
 ├── rid/                       Drone Remote ID sensor (URM-02), EVERYTHING.
-│   ├── rid.module.ts          Wiring + transport choice (mock | UDP | serial | dual).
+│   ├── rid.module.ts          Wiring + transport choice (UDP | serial | dual).
 │   ├── rid.decoder.ts         UDP JSON line → drone state.
 │   ├── rid.ingress.service.ts Capture pipeline for the drone feed.
 │   ├── drone-rid-store.service.ts  In-memory per-serial drone track.
-│   └── transports/            rid-udp / rid-serial / rid-dual + rid-mock (sim).
+│   └── transports/            rid-udp / rid-serial / rid-dual.
 │
 ├── ais/                       AIS maritime sensor (AIS112E), EVERYTHING.
-│   ├── ais.module.ts          Wiring + transport choice (mock | serial | tcp | udp).
+│   ├── ais.module.ts          Wiring + transport choice (serial | tcp | udp).
 │   ├── ais.decoder.ts         NMEA sentence → vessel state.
 │   ├── ais.ingress.service.ts Capture pipeline for the vessel feed.
 │   ├── vessel-store.service.ts     In-memory per-MMSI vessel track.
-│   └── transports/            ais-serial / ais-tcp / ais-udp + ais-mock (sim).
+│   └── transports/            ais-serial / ais-tcp / ais-udp.
 │
 ├── sensors/                   Sensor registry — drives tracks/health/flights.
 │   ├── sensors.module.ts      Aggregates every sensor descriptor (SENSOR_SOURCES).
@@ -114,9 +114,9 @@ All three sensors talk into the app through the **same interface**,
 
 ```ts
 interface DataSource {
-  kind: 'serial' | 'tcp' | 'udp' | 'mock'
-      | 'rid_udp' | 'rid_serial' | 'rid_dual' | 'rid_mock'
-      | 'ais_serial' | 'ais_tcp' | 'ais_udp' | 'ais_mock';
+  kind: 'serial' | 'tcp' | 'udp'
+      | 'rid_udp' | 'rid_serial' | 'rid_dual'
+      | 'ais_serial' | 'ais_tcp' | 'ais_udp';
   connect(): Promise<void>;
   disconnect(): Promise<void>;
   onData(listener: (chunk: Buffer) => void): void;
@@ -177,7 +177,6 @@ interface DataSource {
 | Change radar capture / connection settings        | `src/ingress/transports/*`                     |
 | Change drone JSON parsing                          | `src/rid/rid.decoder.ts`                       |
 | Change how the URM-02 connects                     | `src/rid/transports/rid-udp.transport.ts`      |
-| Add a fake drone or plane for testing              | `src/rid/transports/rid-mock.transport.ts` / `src/ingress/transports/mock.transport.ts` |
 | Add fields to the live feed (`/api/tracks`)        | `src/tracks/` + the store of that sensor       |
 | Change what `/api/health` reports                  | `src/sensors/source-meta.ts` (health specs)   |
 | Change database tables / queries                   | `src/flights/flights.service.ts`             |

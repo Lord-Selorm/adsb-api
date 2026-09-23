@@ -1,6 +1,6 @@
 # ADS-B API
 
-Internal API for live flight tracking from an **ADSR-800 Mode-S/ADS-B receiver** (connected via RS232 serial at 460800 baud), a **URM-01/02 Drone Remote ID module** (UDP 65100 + USB serial), and an **AIS112E maritime receiver**. The service ingests raw DF17 Extended Squitter frames, decodes Mode S/ADS-B messages (position via CPR, altitude, velocity, callsign), ingests Drone Remote ID JSON reports and AIS NMEA sentences, maintains per-entity in-memory tracks, and exposes the live picture over **REST** and **WebSocket** across all three sensors. `mock` transports simulate every receiver, so the entire pipeline (decode → track → API) runs with zero hardware.
+Internal API for live flight tracking from an **ADSR-800 Mode-S/ADS-B receiver** (connected via RS232 serial at 460800 baud), a **URM-01/02 Drone Remote ID module** (UDP 65100 + USB serial), and an **AIS112E maritime receiver**. The service ingests raw DF17 Extended Squitter frames, decodes Mode S/ADS-B messages (position via CPR, altitude, velocity, callsign), ingests Drone Remote ID JSON reports and AIS NMEA sentences, maintains per-entity in-memory tracks, and exposes the live picture over **REST** and **WebSocket** across all three sensors. There are **no simulated feeds** — the API only ever reports data that arrived from real receivers.
 
 ## Quick start
 
@@ -11,16 +11,7 @@ npm run build          # compile once (or after any code change)
 npm run start:prod     # start the API
 ```
 
-That boots the service on `http://localhost:3000` using **simulated feeds only** (mock ADS-B aircraft + mock drones + mock vessels) — zero hardware required, ideal for a first spin or CI.
-
-To connect the **physical URM-02 Drone RID module** as well, set one variable before starting (Windows PowerShell):
-
-```powershell
-$env:RID_USE_MOCK = 'false'
-npm run start:prod
-```
-
-`RID_UDP_HOST` / `RID_UDP_PORT` already default to `0.0.0.0:65100` (the URM-02 streams to port 65100 by default), so nothing else needs setting. The ADS-B feed can stay mocked or go real via `USE_MOCK=false` (see **Setup** below). The URM-02's USB Type-C path and Ethernet path are both captured when `RID_TRANSPORT=dual` (the default).
+That boots the service on `http://localhost:3000` and begins ingesting whatever receivers are attached and reachable — ADS-B comes in over TCP (serial bridge) or a direct COM port, drones from the URM-02 (`RID_TRANSPORT=dual` captures both its UDP 65100 and USB Type-C paths), vessels from the AIS receiver per `AIS_TRANSPORT`.
 
 There's a friendly landing page at `GET /` listing every endpoint — convenient for demos over ngrok.
 
@@ -58,51 +49,33 @@ Key variables:
 
 | Variable        | Purpose                                                  | Example   |
 | --------------- | -------------------------------------------------------- | --------- |
-| `USE_MOCK`      | `true` = simulated ADS-B feed (no hardware), `false` = real receiver | `true`   |
-| `TCP_HOST`      | Serial-bridge IP when `USE_MOCK=false` (USR-TCP232-ED2)  | `192.168.0.7` |
+| `TCP_HOST`      | Serial-bridge IP for the ADSR-800 (USR-TCP232-ED2)       | `192.168.0.7` |
 | `TCP_PORT`      | Bridge TCP port; TCP transport is used when `> 0`        | `8235`    |
 | `TCP_RECONNECT_MS` | Reconnect delay for the TCP socket (ms)              | `1000`    |
-| `SERIAL_PORT`   | COM port when `USE_MOCK=false` and no `TCP_PORT`         | `COM3`    |
+| `SERIAL_PORT`   | COM port used when no `TCP_PORT` is set                  | `COM3`    |
 | `SERIAL_BAUD`   | Serial baud rate for the ADSR-800                        | `460800`  |
 | `SERIAL_INIT_COMMANDS` | ADSR-800 config lines sent after the port opens (see below) | `SetOutput=1` |
-| `MOCK_AIRCRAFT` | How many synthetic aircraft the mock emits                | `8`       |
-| `MOCK_TICK_MS`  | Mock emission interval in ms                              | `1000`    |
 | `PORT`          | HTTP/WebSocket port                                      | `3000`    |
 | `RECEIVER_LAT/LON` | Receiver coordinates, used as CPR local-decode reference | `52`, `4` |
 | `AIR_STALE_MS`  | Ms of silence before an aircraft is flagged `stale`       | `15000`   |
 | `AIR_EVICT_MS`  | Ms of silence before an aircraft is dropped from the store | `60000`   |
-| `RID_USE_MOCK`  | `true` = simulated Drone Remote ID feed, `false` = physical URM-02 | `true` |
-| `RID_MOCK_DRONES` | How many synthetic drones the RID mock emits             | `3`       |
-| `RID_MOCK_TICK_MS` | RID mock emission interval in ms                        | `1000`    |
 | `RID_TRANSPORT`  | Capture path: `dual` (UDP + serial), `udp`, or `serial`  | `dual` |
 | `RID_UDP_HOST` / `RID_UDP_PORT` | URM-02 UDP listen address/port (device default IP `192.168.0.3`, streams to port 65100) | `0.0.0.0` / `65100` |
 | `RID_SERIAL_PORT` / `RID_SERIAL_BAUD` | URM-02 USB Type-C serial path (CH340, 115200) | `COM5` / `115200` |
 | `RID_STALE_MS` / `RID_EVICT_MS` | RID stale flag / eviction thresholds (ms) | `15000` / `60000` |
-| `AIS_USE_MOCK` | `true` = simulated AIS feed, `false` = real AIS receiver | `true` |
 | `AIS_TRANSPORT` | `serial`, `tcp`, or `udp` (AIS112E / AIS112E-A)           | `serial` |
 | `AIS_UDP_PORT` | Inbound UDP port for AIS datagrams (AIS112E-A path)      | `65110`  |
 | `INFLUX_URL` | InfluxDB 2.x endpoint (blank = persistence disabled)     | `http://localhost:8086` |
 | `INFLUX_TOKEN` / `INFLUX_ORG` / `INFLUX_BUCKET` | InfluxDB credentials | `…` / `adsb` / `adsb` |
 
-Run without a receiver first (this is also the default when unset):
+Real ADSR-800 over a TCP serial bridge (USR-TCP232-ED2, TCP-Server mode listening on port 8235):
 
 ```dotenv
-USE_MOCK=true
-```
-
-For the real ADSR-800 over a TCP serial bridge (USR-TCP232-ED2, TCP-Server mode listening on port 8235):
-
-```dotenv
-USE_MOCK=false
 TCP_HOST=192.168.0.7
 TCP_PORT=8235
 ```
 
-For the real ADSR-800 directly on a COM port:
-
-```dotenv
-USE_MOCK=false
-SERIAL_PORT=COM3
+Real ADSR-800 directly on a COM port:
 # Optional: re-affirm ADS-B output right after the port opens (the ADSR-800
 # accepts plain-text config within ~5s of its boot banner; a fresh unit may
 # boot output-disabled). Comma-separate multiple commands, or leave empty.
@@ -130,9 +103,9 @@ npm run start:prod
 
 Both boot on `http://localhost:3000` and begin tracking once frames arrive. For real hardware, set the environment variable **before** starting:
 
-- **URM-02 Drone RID:** `$env:RID_USE_MOCK = 'false'` (UDP + serial, transport `dual`)
-- **ADSR-800 receiver (serial or TCP bridge):** `USE_MOCK=false` + `SERIAL_PORT`/`TCP_HOST` — see Setup above.
-- **AIS receiver:** `AIS_USE_MOCK=false` + `AIS_TRANSPORT` — see Setup above.
+- **URM-02 Drone RID:** transport `dual` (default) captures UDP 65100 + USB Type-C automatically.
+- **ADSR-800 receiver (serial or TCP bridge):** `SERIAL_PORT` or `TCP_HOST`/`TCP_PORT` — see Setup above.
+- **AIS receiver:** pick `AIS_TRANSPORT` (`serial`/`tcp`/`udp`) — see Setup above.
 
 ## Exposing the API (ngrok)
 
@@ -292,16 +265,16 @@ Liveness + ingress/feed status for **all three sensors**.
 | --- | --- |
 | `status` | `"ok"` while the process is healthy |
 | `uptimeSeconds` | Process uptime in seconds |
-| `source` | Active ADS-B transport kind: `mock`, `serial`, or `tcp` |
+| `source` | Active ADS-B transport kind: `serial`, or `tcp` |
 | `trackedAircraft` | Number of aircraft in the store |
 | `malformedMessageCount` | Frames that failed framing/CRC validation |
 | `secondsSinceLastMessage` | Seconds since the last decoded ADS-B message (0 = live) |
 | `connectionStatus` | ADS-B transport state: `connected`, `connecting`, etc. |
-| `ridSource` | Drone Remote ID transport kind: `rid_mock`, `rid_udp`, `rid_serial`, `rid_dual` |
+| `ridSource` | Drone Remote ID transport kind: `rid_udp`, `rid_serial`, `rid_dual` |
 | `ridConnectionStatus` | RID transport state |
 | `ridSecondsSinceLastMessage` | Seconds since the last RID report (0 = live) |
 | `trackedDrones` | Number of drones in the RID store |
-| `aisSource` | AIS transport kind: `ais_mock`, `ais_serial`, `ais_tcp`, `ais_udp` |
+| `aisSource` | AIS transport kind: `ais_serial`, `ais_tcp`, `ais_udp` |
 | `aisConnectionStatus` | AIS transport state |
 | `aisSecondsSinceLastMessage` | Seconds since the last AIS message (0 = live) |
 | `trackedVessels` | Number of vessels in the AIS store |
@@ -409,7 +382,7 @@ ADSR-800 (RS232, 460800 baud)     URM-02 RID module (UDP 65100 + USB serial)   A
    │  DF17 extended squitter         │  {"frame_type":7|3,...} JSON lines        │  AIVDM NMEA sentences
    ▼                                 ▼                                          ▼
 Ingress layer ── transport:         RID ingress ── transport:                  AIS ingress ── transport:
-   Serial | Mock | TCP                RidMock|RidUDP|RidSerial|RidDual           AisMock|AisSerial|AisTcp|AisUdp
+   Serial | TCP                           RidUDP|RidSerial|RidDual           AisSerial|AisTcp|AisUdp
    │  raw bytes                       │  raw bytes                               │  raw bytes
    ▼                                 ▼                                          ▼
 FramingDetector ── Beast/AVR/hex     RidDecoder ── JSON line → DroneRidState    AisDecoder ── AIVDM → VesselState
@@ -436,9 +409,9 @@ Each sensor (ADS-B, Drone RID, AIS) keeps its own transport + decode + store beh
 ```
 AppModule ── imports ───────────────────────┐
    ├─ DecodeModule   (src/decode)          ├─ ModeSDecoder (shared, single instance)
-   ├─ IngressModule  (src/ingress)         ├─ ADS-B transport factory (serial|tcp|mock)
+   ├─ IngressModule  (src/ingress)         ├─ ADS-B transport factory (serial|tcp)
    ├─ AircraftModule (src/aircraft)        ├─ AircraftStoreService + REST (/api/aircraft)
-   ├─ RidModule      (src/rid)             ├─ RID decoder + transports (mock|udp|serial|dual) + store + /api/rid
+   ├─ RidModule      (src/rid)             ├─ RID decoder + transports (udp|serial|dual) + store + /api/rid
    ├─ AisModule      (src/ais)             ├─ AIS decoder + transports + store + /api/vessels
    ├─ TracksModule   (src/tracks)          ├─ TrackStoreService + /api/tracks + WebSocket gateway
    ├─ FlightsModule  (src/flights)         ├─ FlightsService (InfluxDB) + /api/flights (aircraft + drone + vessel history)
