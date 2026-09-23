@@ -15,7 +15,7 @@ export function applyGlobalConfig(app: INestApplication): void {
   });
 
   const apiPrefix = config.get<string>('API_PREFIX', 'api');
-  app.setGlobalPrefix(apiPrefix);
+  app.setGlobalPrefix(apiPrefix, { exclude: ['/'] });
 
   // Swagger UI at /api/docs, raw OpenAPI JSON at /api/docs-json.
   const swaggerConfig = new DocumentBuilder()
@@ -23,7 +23,7 @@ export function applyGlobalConfig(app: INestApplication): void {
     .setDescription(
       'Live flight tracking from an ADSR-800 Mode-S/ADS-B receiver: ' +
         'ingest → decode → in-memory track → REST / WebSocket feed, ' +
-        'with optional TimescaleDB history.',
+        'with optional InfluxDB history.',
     )
     .setVersion('0.0.1')
     .addServer('/api')

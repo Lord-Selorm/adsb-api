@@ -2,7 +2,7 @@
 
 ADS-B API is a **NestJS** service that turns raw signals from two physical
 sensors into a live map of planes and drones, served over HTTP + WebSocket,
-with optional history saved to TimescaleDB.
+with optional history saved to InfluxDB.
 
 The golden rule that keeps this codebase easy to navigate:
 
@@ -35,7 +35,7 @@ ADSR-800 receiver                 URM-02 Drone RID module
                  │
                  ▼
         REST  +  WebSocket        +  src/flights/
-        (/api/tracks etc.)         (saves history to TimescaleDB)
+        (/api/tracks etc.)         (saves history to InfluxDB)
 ```
 
 Read it as **capture → decode → live store → combined view → serve / save**.
@@ -76,9 +76,8 @@ src/
 │   ├── tracks.controller.ts   GET /api/tracks.
 │   └── tracks.gateway.ts      WebSocket (Socket.IO) live stream.
 │
-├── flights/                   History persistence (needs DATABASE_URL).
-│   ├── flights.service.ts     Buffers updates → batch-writes to TimescaleDB.
-│   ├── schema.ts              Drizzle table definitions.
+├── flights/                   History persistence (needs INFLUX_* settings).
+│   ├── flights.service.ts     Buffers updates → batch-writes to InfluxDB.
 │   └── flights.controller.ts  /api/flights/* (aircraft + drone history).
 │
 ├── health/                    Liveness report — /api/health.
@@ -134,7 +133,7 @@ changes.
 | Add a fake drone or plane for testing              | `src/rid/transports/rid-mock.transport.ts` / `src/ingress/transports/mock.transport.ts` |
 | Add fields to the live feed (`/api/tracks`)        | `src/tracks/` + the store of that sensor       |
 | Change what `/api/health` reports                  | `src/health/health.controller.ts`              |
-| Change database tables / queries                   | `src/flights/schema.ts` + `src/flights/flights.service.ts` |
+| Change database tables / queries                   | `src/flights/flights.service.ts`             |
 | Change CORS or the `/api` prefix                   | `src/bootstrap.ts`                             |
 | Add a health field for a new sensor                | Implement `DataSource`, then add it to `src/health/health.controller.ts` |
 

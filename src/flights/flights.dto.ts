@@ -154,3 +154,70 @@ export class DroneFlightSummaryDto {
   @ApiProperty({ description: 'Number of stored positions for this drone' })
   message_count: number;
 }
+
+export class VesselPositionDto {
+  @ApiProperty({ description: 'Time the position was stored (UTC)' })
+  time: Date;
+
+  @ApiProperty({ description: 'Maritime Mobile Service Identity (9 digits)' })
+  mmsi: string;
+
+  @ApiPropertyOptional({ description: 'Vessel name', nullable: true })
+  name?: string | null;
+
+  @ApiPropertyOptional({ description: 'Callsign', nullable: true })
+  callsign?: string | null;
+
+  @ApiPropertyOptional({ description: 'Latitude (deg, WGS84)', nullable: true })
+  latitude?: number | null;
+
+  @ApiPropertyOptional({ description: 'Longitude (deg, WGS84)', nullable: true })
+  longitude?: number | null;
+
+  @ApiPropertyOptional({
+    description: 'Speed over ground (kt)',
+    nullable: true,
+  })
+  sog?: number | null;
+
+  @ApiPropertyOptional({
+    description: 'Course over ground (deg)',
+    nullable: true,
+  })
+  cog?: number | null;
+
+  @ApiPropertyOptional({ description: 'True heading (deg)', nullable: true })
+  heading?: number | null;
+
+  @ApiPropertyOptional({ description: 'Navigation status code', nullable: true })
+  nav_status?: number | null;
+
+  @ApiPropertyOptional({ description: 'Ship type code', nullable: true })
+  ship_type?: number | null;
+
+  @ApiPropertyOptional({ description: 'Destination', nullable: true })
+  destination?: string | null;
+
+  @ApiPropertyOptional({ description: 'Draft (m)', nullable: true })
+  draft?: number | null;
+
+  @ApiPropertyOptional({ description: 'Length (m)', nullable: true })
+  length?: number | null;
+
+  @ApiPropertyOptional({ description: 'Width (m)', nullable: true })
+  width?: number | null;
+}
+
+export class VesselFlightSummaryDto {
+  @ApiProperty({ description: 'Maritime Mobile Service Identity (9 digits)' })
+  mmsi: string;
+
+  @ApiPropertyOptional({ description: 'First message time (UTC)', nullable: true })
+  first_seen?: Date | null;
+
+  @ApiPropertyOptional({ description: 'Last message time (UTC)', nullable: true })
+  last_seen?: Date | null;
+
+  @ApiProperty({ description: 'Number of stored positions for this vessel' })
+  message_count: number;
+}

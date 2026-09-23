@@ -19,12 +19,26 @@ import { RID_TRANSPORT_TOKEN } from './rid.transport.token.js';
 export class RidIngressService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RidIngressService.name);
   private pending = '';
+  private readonly stats = {
+    rawBytes: 0,
+    rawChunks: 0,
+    jsonLines: 0,
+    nonJsonLines: 0,
+    droneFrames: 0,
+    ignoredFrames: 0,
+    lastRawLine: '',
+    lastIgnoredLine: '',
+  };
 
   constructor(
     @Inject(RID_TRANSPORT_TOKEN) private readonly source: DataSource,
     private readonly decoder: RidDecoder,
     private readonly store: DroneRidStoreService,
   ) {}
+
+  getStats(): typeof this.stats {
+    return { ...this.stats, dronesTracked: this.store.count } as typeof this.stats;
+  }
 
   async onModuleInit(): Promise<void> {
     this.connect();
@@ -48,12 +62,25 @@ export class RidIngressService implements OnModuleInit, OnModuleDestroy {
   }
 
   private onChunk(chunk: Buffer): void {
+    this.stats.rawBytes += chunk.length;
+    this.stats.rawChunks++;
     this.pending += chunk.toString('utf8');
     const lines = this.pending.split('\n');
     this.pending = lines.pop() ?? '';
     for (const line of lines) {
-      const drone = this.decoder.decodeLine(line);
-      if (drone) this.store.handle(drone);
+      const { drone, status } = this.decoder.decodeLineWithStatus(line);
+      if (drone) {
+        this.stats.droneFrames++;
+        this.stats.lastRawLine = line.slice(0, 300);
+        this.store.handle(drone);
+        continue;
+      }
+      if (status === 'non_json') this.stats.nonJsonLines++;
+      else if (status === 'empty') this.stats.jsonLines++;
+      else {
+        this.stats.ignoredFrames++;
+        this.stats.lastIgnoredLine = line.slice(0, 300);
+      }
     }
   }
 }

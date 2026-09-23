@@ -43,46 +43,62 @@ export class RidDecoder {
   private readonly logger = new Logger(RidDecoder.name);
 
   decodeLine(line: string): RidReport | null {
+    return this.decodeLineWithStatus(line).drone;
+  }
+
+  /** Same parsing as decodeLine, but also reports why a line was skipped. */
+  decodeLineWithStatus(line: string): {
+    drone: RidReport | null;
+    /** 'empty' | 'non_json' | 'non_drone' | 'no_serial' | 'ok' */
+    status: string;
+  } {
     const raw = line.trim();
-    if (!raw) return null;
+    if (!raw) return { drone: null, status: 'empty' };
 
     let parsed: RidFrameEnvelope;
     try {
       parsed = JSON.parse(raw) as RidFrameEnvelope;
     } catch {
       this.logger.debug('Ignoring non-JSON RID line');
-      return null;
+      return { drone: null, status: 'non_json' };
     }
 
     const info = (parsed?.frame_info ?? parsed) as Partial<RidReport> &
       Record<string, unknown>;
-    if (!info || typeof info !== 'object') return null;
+    if (!info || typeof info !== 'object') {
+      return { drone: null, status: 'non_json' };
+    }
 
     // Ignore non-drone frames such as the device GNSS heartbeat (frame_type 7).
-    if (parsed.frame_type !== undefined && parsed.frame_type !== 3) return null;
+    if (parsed.frame_type !== undefined && parsed.frame_type !== 3) {
+      return { drone: null, status: 'non_drone' };
+    }
 
     const serial = str(pick(info, 'serial_number', 'uav_sn'));
-    if (!serial) return null;
+    if (!serial) return { drone: null, status: 'no_serial' };
 
     return {
-      serial_number: serial,
-      longitude: num(pick(info, 'longitude', 'uav_lon')),
-      latitude: num(pick(info, 'latitude', 'uav_lat')),
-      height: num(pick(info, 'height', 'uav_height')),
-      altitude: num(info.altitude),
-      v_hor: num(pick(info, 'v_hor', 'uav_v_hor')),
-      v_up: num(info.v_up),
-      app_lat: num(info.app_lat),
-      app_lon: num(info.app_lon),
-      app_alt: num(info.app_alt),
-      app_type: num(info.app_type),
-      uav_type: str(info.uav_type),
-      reg_code: str(info.reg_code),
-      angle: num(info.angle),
-      status: num(info.status),
-      sys_type: num(info.sys_type),
-      weight: num(info.weight),
-      has_allowlist: bool(info.has_allowlist),
+      drone: {
+        serial_number: serial,
+        longitude: num(pick(info, 'longitude', 'uav_lon')),
+        latitude: num(pick(info, 'latitude', 'uav_lat')),
+        height: num(pick(info, 'height', 'uav_height')),
+        altitude: num(info.altitude),
+        v_hor: num(pick(info, 'v_hor', 'uav_v_hor')),
+        v_up: num(info.v_up),
+        app_lat: num(info.app_lat),
+        app_lon: num(info.app_lon),
+        app_alt: num(info.app_alt),
+        app_type: num(info.app_type),
+        uav_type: str(info.uav_type),
+        reg_code: str(info.reg_code),
+        angle: num(info.angle),
+        status: num(info.status),
+        sys_type: num(info.sys_type),
+        weight: num(info.weight),
+        has_allowlist: bool(info.has_allowlist),
+      },
+      status: 'ok',
     };
   }
 }

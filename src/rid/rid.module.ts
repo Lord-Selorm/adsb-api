@@ -5,12 +5,14 @@ import { RidUdpTransport } from './transports/rid-udp.transport.js';
 import { RidSerialTransport } from './transports/rid-serial.transport.js';
 import { RidDualTransport } from './transports/rid-dual.transport.js';
 import { DroneRidStoreService } from './drone-rid-store.service.js';
+import { RidController } from './rid.controller.js';
 import { RidDecoder } from './rid.decoder.js';
 import { RidIngressService } from './rid.ingress.service.js';
 import { RID_TRANSPORT_TOKEN } from './rid.transport.token.js';
 
 @Module({
   imports: [ConfigModule],
+  controllers: [RidController],
   providers: [
     RidDecoder,
     RidIngressService,

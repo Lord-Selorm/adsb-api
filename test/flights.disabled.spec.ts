@@ -6,12 +6,12 @@ import type { DroneRidState } from '../src/rid/drone-rid-store.service.js';
 function makeConfig(url?: string) {
   return {
     get: (key: string, def?: string) =>
-      key === 'DATABASE_URL' ? (url ?? def) : def,
+      key === 'INFLUX_URL' ? (url ?? def) : def,
   } as never;
 }
 
 describe('FlightsService', () => {
-  it('is disabled when DATABASE_URL is not set', async () => {
+  it('is disabled when INFLUX_URL is not set', async () => {
     const svc = new FlightsService(makeConfig(undefined));
     await svc.onModuleInit();
     // No pool -> enqueue no-ops, no error.

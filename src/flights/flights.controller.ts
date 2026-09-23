@@ -5,6 +5,8 @@ import {
   DronePositionDto,
   FlightSummaryDto,
   PositionDto,
+  VesselFlightSummaryDto,
+  VesselPositionDto,
 } from './flights.dto.js';
 import { FlightsService } from './flights.service.js';
 
@@ -97,5 +99,50 @@ export class FlightsController {
   @ApiOkResponse({ schema: { type: 'number' }, description: 'Drone row count' })
   droneCount(): Promise<number> {
     return this.flights.queryDronePositionCount();
+  }
+
+  @Get('vessels/positions/:mmsi')
+  @ApiOperation({ summary: 'Position history for one vessel within a time range' })
+  @ApiOkResponse({
+    type: [VesselPositionDto],
+    description: 'Stored vessel position rows',
+  })
+  vesselPositions(
+    @Param('mmsi') mmsi: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ): Promise<VesselPositionDto[]> {
+    const now = Date.now();
+    const toDate = to ? new Date(to) : new Date(now);
+    const fromDate = from ? new Date(from) : new Date(now - 3600_000);
+    return this.flights.queryVesselPositions(mmsi, fromDate, toDate);
+  }
+
+  @Get('vessels/list')
+  @ApiOperation({ summary: 'Distinct vessels seen within a time range' })
+  @ApiOkResponse({
+    type: [VesselFlightSummaryDto],
+    description: 'Vessel flight summary list',
+  })
+  vesselList(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('limit') limit?: string,
+  ): Promise<VesselFlightSummaryDto[]> {
+    const now = Date.now();
+    const toDate = to ? new Date(to) : new Date(now);
+    const fromDate = from ? new Date(from) : new Date(now - 3600_000);
+    return this.flights.queryVesselFlights(
+      fromDate,
+      toDate,
+      limit ? Number(limit) : 100,
+    );
+  }
+
+  @Get('vessels/count')
+  @ApiOperation({ summary: 'Total rows stored in vessel_positions' })
+  @ApiOkResponse({ schema: { type: 'number' }, description: 'Vessel row count' })
+  vesselCount(): Promise<number> {
+    return this.flights.queryVesselPositionCount();
   }
 }

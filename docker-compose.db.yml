@@ -1,25 +1,26 @@
 services:
-  # Central TimescaleDB database — run this ONCE on a shared server/VPS.
-  # Every ADS-B API instance (local or remote) points at this via DATABASE_URL.
-  timescaledb:
-    image: timescale/timescaledb:latest-pg16
-    container_name: adsb-timescaledb
+  # Central InfluxDB 2.x database — run this ONCE on a shared server/VPS.
+  # Every ADS-B API instance (local or remote) points at this via INFLUX_*.
+  influxdb:
+    image: influxdb:2.7
+    container_name: adsb-influxdb
     restart: unless-stopped
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "${INFLUX_PORT:-8086}:8086"
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-adsb}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set a strong POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB:-adsb}
-      # Persist data across container restarts.
-      PGDATA: /var/lib/postgresql/data/pgdata
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUX_USERNAME:-admin}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUX_PASSWORD:?set a strong INFLUX_PASSWORD}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUX_ORG:-adsb}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUX_BUCKET:-adsb}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUX_TOKEN:?set INFLUX_TOKEN}
     volumes:
-      - adsb_pgdata:/var/lib/postgresql/data/pgdata
+      - adsb_influxdb:/var/lib/influxdb2
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-adsb} -d ${POSTGRES_DB:-adsb}"]
+      test: ["CMD", "influx", "ping"]
       interval: 5s
       timeout: 5s
       retries: 10
 
 volumes:
-  adsb_pgdata:
+  adsb_influxdb:

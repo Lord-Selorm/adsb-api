@@ -8,6 +8,7 @@ import { IngressModule } from './ingress/ingress.module.js';
 import { RidModule } from './rid/rid.module.js';
 import { AisModule } from './ais/ais.module.js';
 import { TracksModule } from './tracks/tracks.module.js';
+import { RootModule } from './root/root.module.js';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { TracksModule } from './tracks/tracks.module.js';
     AisModule,
     FlightsModule,
     HealthModule,
+    RootModule,
   ],
 })
 export class AppModule {}
