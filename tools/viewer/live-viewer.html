@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ADS-B / RID / AIS Live</title>
+<style>
+  body{font-family:Segoe UI,Arial,sans-serif;background:#0d1117;color:#e6edf3;margin:0;padding:16px}
+  h1{font-size:18px;margin:0 0 6px}
+  .bar{display:flex;gap:16px;align-items:baseline;margin-bottom:16px;flex-wrap:wrap}
+  .pill{padding:3px 10px;border-radius:12px;font-size:13px;background:#21262d;border:1px solid #30363d}
+  .up{color:#3fb950}.down{color:#f85149}.idle{color:#d29922}
+  .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px}
+  .card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px}
+  .card h2{font-size:14px;margin:0 0 8px;color:#79c0ff}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{padding:4px 6px;text-align:left;border-bottom:1px solid #21262d;white-space:nowrap}
+  th{color:#8b949e;font-weight:600}
+  .empty{color:#8b949e;font-size:12px;padding:10px 0}
+  .red{color:#f85149}.green{color:#3fb950}.gray{color:#8b949e}
+</style>
+</head>
+<body>
+  <h1>ADS-B &middot; RID &middot; AIS &mdash; Live Viewer</h1>
+  <div class="bar">
+    <span class="pill" id="pAds">ADS-B &hellip;</span>
+    <span class="pill" id="pRid">RID &hellip;</span>
+    <span class="pill" id="pAis">AIS &hellip;</span>
+    <span class="pill gray" id="pClock">&nbsp;</span>
+  </div>
+  <div class="card" style="margin-bottom:16px"><h2>Connected Devices</h2><div id="dev"></div></div>
+  <div class="cols">
+    <div class="card"><h2>Aircraft (ADS-B)</h2><div id="air"></div></div>
+    <div class="card"><h2>Vessels (AIS)</h2><div id="ves"></div></div>
+    <div class="card"><h2>Drones (Remote ID)</h2><div id="drn"></div></div>
+  </div>
+<script>
+const api = ''; // same-origin (viewer proxies /api -> 3000)
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function pill(el, cls, label){ el.className = 'pill '+cls; el.textContent = label; }
+
+function fmtDate(ms){
+  if(!ms) return '?';
+  const d = new Date(ms), now = Date.now();
+  return Math.round((now - ms)/1000) + 's ago';
+}
+
+async function jget(p, attempt = 0){
+  try { const r = await fetch(api + p, {signal: AbortSignal.timeout(6000)}); return await r.json(); }
+  catch(e){ if(attempt < 2) return new Promise(res => setTimeout(()=>res(jget(p, attempt+1)), 800)); throw e; }
+}
+
+function renderTable(headers, rows){
+  if(!rows.length) return '<div class="empty">No live targets right now (quiet airspace / receivers idle).</div>';
+  const h = headers.map(x => '<th>'+esc(x)+'</th>').join('');
+  const b = rows.map(r => '<tr>'+ r.map(c => '<td>'+esc(c)+'</td>').join('') +'</tr>').join('');
+  return '<table><thead><tr>'+h+'</tr></thead><tbody>'+b+'</tbody></table>';
+}
+
+async function tick(){
+  const now = Date.now();
+  $('pClock').textContent = new Date(now).toLocaleTimeString();
+  let h;
+  try {
+    h = await jget('/api/health');
+    const ads = h.trackedAircraft, hooks = Math.round(h.secondsSinceLastMessage);
+    pill($('pAds'), (ads > 0 || hooks < 90) && h.connectionStatus === 'connected' ? 'up' : (h.connectionStatus === 'connected' ? 'idle' : 'down'),
+      'ADS-B: ' + h.connectionStatus + ' · ' + hooks + 's since frame · ' + ads + ' acft');
+    pill($('pRid'), (h.trackedDrones > 0 || h.ridSecondsSinceLastMessage < 15) && h.ridConnectionStatus.includes('connected') ? 'up' : 'idle',
+      'RID: ' + h.ridConnectionStatus + ' · ' + Math.round(h.ridSecondsSinceLastMessage) + 's · ' + h.trackedDrones + ' drones');
+    const aisl = Math.round(h.aisSecondsSinceLastMessage);
+    pill($('pAis'), (h.trackedVessels > 0 || aisl < 900) && h.aisConnectionStatus === 'connected' ? 'up' : (h.aisConnectionStatus === 'connected' ? 'idle' : 'down'),
+      'AIS: ' + h.aisConnectionStatus + ' · ' + aisl + 's · ' + h.trackedVessels + ' vessels');
+  } catch(e){ pill($('pAds'),'down','ADS-B: API unreachable — ' + e.message); }
+
+  try {
+    const dv = await jget('/devices');
+    const devs = (dv.devices || []).map(d => {
+      const cls = d.online ? 'green' : 'down';
+      const st = d.online ? 'ONLINE' : 'OFFLINE';
+      const host = (d.display || d.ip || 'loopback') + (d.port ? ':'+d.port : '');
+      return '<tr><td>'+esc(d.name)+'</td><td class="'+cls+'">'+st+'</td><td>'+host+'</td></tr>';
+    }).join('');
+    $('dev').innerHTML = devs
+      ? '<table><thead><tr><th>Device</th><th>Status</th><th>Host</th></tr></thead><tbody>'+devs+'</tbody></table>'
+      : '<div class="empty">No devices reachable.</div>';
+  } catch(e){ $('dev').innerHTML = '<div class="empty red">dev err: '+esc(e.message)+'</div>'; }
+
+  try {
+    const a = await jget('/api/aircraft');
+    const list = Array.isArray(a) ? a : (a.aircraft || []);
+    $('air').innerHTML = renderTable(['ICAO','Callsign','Alt','Speed','Lat','Lon','Seen'], list.map(x => [
+      x.icao, x.callsign || x.flight || '-', x.altitude ?? '-', x.groundSpeed ?? x.speed ?? '-',
+      (x.latitude ?? x.lat)?.toFixed(3) ?? '-', (x.longitude ?? x.lon)?.toFixed(3) ?? '-', fmtDate(x.lastUpdatedAt)
+    ]));
+  } catch(e){ $('air').innerHTML = '<div class="empty red">err: '+esc(e.message)+'</div>'; }
+
+  try {
+    const v = await jget('/api/vessels');
+    const list = Array.isArray(v) ? v : (v.vessels || v.data || []);
+    $('ves').innerHTML = renderTable(['MMSI','Name','Lat','Lon','<span title="Course">COG</span>','<span title="Speed over ground">SOG</span>'], list.map(x => [
+      x.mmsi, x.name || '-', x.latitude?.toFixed(3) ?? '-', x.longitude?.toFixed(3) ?? '-',
+      x.course ?? x.cog ?? '-', x.speed ?? x.sog ?? '-'
+    ]));
+  } catch(e){ $('ves').innerHTML = '<div class="empty red">err: '+esc(e.message)+'</div>'; }
+
+  try {
+    let d;
+    try { d = await jget('/api/rid/drones'); }
+    catch(e){
+      d = await jget('/api/flights/drones/list');
+    }
+    const list = Array.isArray(d) ? d : (d.drones || d.data || d.list || []);
+    $('drn').innerHTML = renderTable(['Serial','Lat','Lon','Alt','Seen'], list.map(x => [
+      x.serial ?? x.serialNumber ?? '-', x.latitude?.toFixed(3) ?? '-', x.longitude?.toFixed(3) ?? '-',
+      x.altitude ?? x.height ?? x.relativeAltitude ?? '-', fmtDate(x.lastUpdatedAt ?? x.timestamp)
+    ]));
+  } catch(e){ $('drn').innerHTML = '<div class="empty red">err: '+esc(e.message)+'</div>'; }
+}
+
+tick();
+setInterval(tick, 3000);
+</script>
+</body>
+</html>
