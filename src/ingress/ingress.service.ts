@@ -7,17 +7,19 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ModeSDecoder } from '../decode/mode-s.decoder.js';
+import { AircraftStoreService } from '../aircraft/aircraft-store.service.js';
 import type { ParsedFrame } from './framing/framing.types.js';
 import { FramingDetector } from './framing/framing.detector.js';
 import type { DataSource } from '../common/data-source.interface.js';
 import { TRANSPORT_TOKEN } from './transport.token.js';
-import { TrackStoreService } from '../tracks/track-store.service.js';
 
 /**
  * Ingress pipeline: DataSource bytes -> FramingDetector -> ModeSDecoder ->
- * TrackStore. Transport selection is decided by the `USE_MOCK` flag in
- * IngressModule (`true` = mock simulator, `false` = real ADSR-800 serial;
- * TCP/UDP are future slots behind the same DataSource contract).
+ * AircraftStoreService. Transport selection is decided by the `USE_MOCK` flag
+ * in IngressModule (`true` = mock simulator, `false` = real ADSR-800 serial;
+ * TCP/UDP are future slots behind the same DataSource contract). Writes go
+ * straight to the aircraft store; the track store/fights persistence pick it
+ * up through the SENSOR_SOURCES registry.
  */
 @Injectable()
 export class IngressService implements OnModuleInit, OnModuleDestroy {
@@ -27,7 +29,7 @@ export class IngressService implements OnModuleInit, OnModuleDestroy {
   constructor(
     @Inject(TRANSPORT_TOKEN) private readonly source: DataSource,
     private readonly config: ConfigService,
-    private readonly store: TrackStoreService,
+    private readonly store: AircraftStoreService,
     private readonly decoder: ModeSDecoder,
   ) {}
 
@@ -70,6 +72,6 @@ export class IngressService implements OnModuleInit, OnModuleDestroy {
       this.logger.debug(`Dropping bad CRC for ${msg.icao}`);
       return;
     }
-    this.store.handleAircraft(msg);
+    this.store.handle(msg);
   }
 }

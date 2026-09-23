@@ -1,10 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import type { DataSource } from '../common/data-source.interface.js';
+import {
+  DRONE_SOURCE,
+  type SensorSourceDescriptor,
+} from '../sensors/sensor-source.js';
+import { createDroneSource } from '../sensors/source-meta.js';
 import { RidMockTransport } from './transports/rid-mock.transport.js';
 import { RidUdpTransport } from './transports/rid-udp.transport.js';
 import { RidSerialTransport } from './transports/rid-serial.transport.js';
 import { RidDualTransport } from './transports/rid-dual.transport.js';
-import { DroneRidStoreService } from './drone-rid-store.service.js';
+import { DroneRidStoreService, type DroneRidState } from './drone-rid-store.service.js';
 import { RidController } from './rid.controller.js';
 import { RidDecoder } from './rid.decoder.js';
 import { RidIngressService } from './rid.ingress.service.js';
@@ -69,7 +75,21 @@ import { RID_TRANSPORT_TOKEN } from './rid.transport.token.js';
         return new RidDualTransport(createUdp(), createSerial());
       },
     },
+    {
+      provide: DRONE_SOURCE,
+      inject: [DroneRidStoreService, RID_TRANSPORT_TOKEN],
+      useFactory: (
+        store: DroneRidStoreService,
+        transport: DataSource,
+      ): SensorSourceDescriptor<DroneRidState> =>
+        createDroneSource(store, transport),
+    },
   ],
-  exports: [DroneRidStoreService, RidIngressService, RID_TRANSPORT_TOKEN],
+  exports: [
+    DroneRidStoreService,
+    RidIngressService,
+    RID_TRANSPORT_TOKEN,
+    DRONE_SOURCE,
+  ],
 })
 export class RidModule {}

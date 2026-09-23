@@ -6,6 +6,8 @@ import {
   buildPositionFrame,
 } from '../ingress/transports/frame-builder.js';
 import { DroneRidStoreService } from '../rid/drone-rid-store.service.js';
+import { createAircraftSource, createDroneSource } from '../sensors/source-meta.js';
+import type { DataSource } from '../common/data-source.interface.js';
 import { TrackStoreService } from './track-store.service.js';
 
 describe('TrackStoreService', () => {
@@ -25,7 +27,10 @@ describe('TrackStoreService', () => {
       evictAfterMs: 60_000,
       scanIntervalMs: 10_000,
     });
-    const tracks = new TrackStoreService(adsb, drone);
+    const tracks = new TrackStoreService([
+      createAircraftSource(adsb, {} as DataSource),
+      createDroneSource(drone, {} as DataSource),
+    ]);
     const decoder = new ModeSDecoder();
     return { adsb, drone, tracks, decoder };
   };

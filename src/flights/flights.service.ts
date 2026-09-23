@@ -1,4 +1,5 @@
 import {
+  Inject,
   Injectable,
   Logger,
   OnModuleDestroy,
@@ -7,24 +8,37 @@ import {
 import { ConfigService } from '@nestjs/config';
 import {
   InfluxDB,
-  Point,
+  type Point,
   type QueryApi,
   type WriteApi,
 } from '@influxdata/influxdb-client';
 import type { AircraftState } from '../aircraft/aircraft-store.service.js';
 import type { DroneRidState } from '../rid/drone-rid-store.service.js';
 import type { VesselState } from '../ais/ais.types.js';
+import {
+  SENSOR_SOURCES,
+  type SensorFlightsSpec,
+  type SensorSourceDescriptor,
+} from '../sensors/sensor-source.js';
+import {
+  MEASUREMENT_AIRCRAFT,
+  MEASUREMENT_DRONE,
+  MEASUREMENT_VESSEL,
+  TAG_ICAO,
+  TAG_SERIAL,
+  TAG_MMSI,
+} from './flights.constants.js';
+
+export { MEASUREMENT_AIRCRAFT, MEASUREMENT_DRONE, MEASUREMENT_VESSEL };
+export { TAG_ICAO, TAG_SERIAL, TAG_MMSI };
 
 const FLUSH_INTERVAL_MS = 5_000;
 const FLUSH_BATCH_SIZE = 200;
 
-export const MEASUREMENT_AIRCRAFT = 'aircraft_positions';
-export const MEASUREMENT_DRONE = 'drone_positions';
-export const MEASUREMENT_VESSEL = 'vessel_positions';
-
-export const TAG_ICAO = 'icao';
-export const TAG_SERIAL = 'serial_number';
-export const TAG_MMSI = 'mmsi';
+interface PendingEntry {
+  spec: SensorFlightsSpec<unknown>;
+  state: unknown;
+}
 
 export interface PositionRow {
   time: Date;
@@ -136,6 +150,11 @@ function escapeFlux(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
+/**
+ * Persists live sensor state to InfluxDB. Which measurement/tag/fields each
+ * state maps to is decided by the sensor's registry descriptor (buildPoint),
+ * so this service has no per-sensor knowledge — it just buffers + batches.
+ */
 @Injectable()
 export class FlightsService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(FlightsService.name);
@@ -143,12 +162,14 @@ export class FlightsService implements OnModuleInit, OnModuleDestroy {
   private writeApi: WriteApi | null = null;
   private queryApi: QueryApi | null = null;
   private flushTimer: NodeJS.Timeout | null = null;
-  private buffer: AircraftState[] = [];
-  private droneBuffer: DroneRidState[] = [];
-  private vesselBuffer: VesselState[] = [];
+  private pending: PendingEntry[] = [];
   private enabled = false;
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    @Inject(SENSOR_SOURCES)
+    private readonly sources: Array<SensorSourceDescriptor<unknown>> = [],
+  ) {}
 
   async onModuleInit(): Promise<void> {
     const url = this.config.get<string>('INFLUX_URL');
@@ -188,21 +209,24 @@ export class FlightsService implements OnModuleInit, OnModuleDestroy {
   }
 
   enqueue(state: AircraftState): void {
-    if (!this.enabled) return;
-    this.buffer.push(state);
-    if (this.buffer.length >= FLUSH_BATCH_SIZE) this.flushSync();
+    this.enqueueSource('adsb', state);
   }
 
   enqueueDrone(state: DroneRidState): void {
-    if (!this.enabled) return;
-    this.droneBuffer.push(state);
-    if (this.droneBuffer.length >= FLUSH_BATCH_SIZE) this.flushSync();
+    this.enqueueSource('drone_rid', state);
   }
 
   enqueueVessel(state: VesselState): void {
+    this.enqueueSource('ais', state);
+  }
+
+  /** Registry-driven entry point used by FlightsModule's event wiring. */
+  enqueueSource(source: string, state: unknown): void {
     if (!this.enabled) return;
-    this.vesselBuffer.push(state);
-    if (this.vesselBuffer.length >= FLUSH_BATCH_SIZE) this.flushSync();
+    const spec = this.flightSpec(source);
+    if (!spec) return;
+    this.pending.push({ spec, state });
+    if (this.pending.length >= FLUSH_BATCH_SIZE) this.flushSync();
   }
 
   async flush(): Promise<void> {
@@ -210,81 +234,11 @@ export class FlightsService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async flushSync(): Promise<void> {
-    if (
-      !this.writeApi ||
-      (this.buffer.length === 0 &&
-        this.droneBuffer.length === 0 &&
-        this.vesselBuffer.length === 0)
-    )
-      return;
+    if (!this.writeApi || this.pending.length === 0) return;
+    const entries = this.pending.splice(0);
     const points: Point[] = [];
-    if (this.buffer.length > 0) {
-      const states = this.buffer.splice(0);
-      for (const s of states) {
-        const p = new Point(MEASUREMENT_AIRCRAFT)
-          .tag(TAG_ICAO, s.icao)
-          .timestamp(new Date(s.lastUpdatedAt));
-        if (s.callsign) p.stringField('callsign', s.callsign);
-        if (isNum(s.lat)) p.floatField('latitude', s.lat!);
-        if (isNum(s.lon)) p.floatField('longitude', s.lon!);
-        if (isNum(s.altitude)) p.intField('altitude', s.altitude!);
-        if (isNum(s.heading)) p.floatField('heading', s.heading!);
-        if (isNum(s.speed)) p.floatField('speed', s.speed!);
-        if (isNum(s.verticalRate)) p.intField('vertical_rate', s.verticalRate!);
-        if (s.squawk) p.stringField('squawk', s.squawk);
-        if (s.positionSource) p.stringField('position_source', s.positionSource);
-        if (s.onGround !== undefined) p.booleanField('on_ground', s.onGround);
-        points.push(p);
-      }
-    }
-    if (this.droneBuffer.length > 0) {
-      const drones = this.droneBuffer.splice(0);
-      for (const d of drones) {
-        const p = new Point(MEASUREMENT_DRONE)
-          .tag(TAG_SERIAL, d.serial_number)
-          .timestamp(new Date(d.lastUpdatedAt));
-        if (isNum(d.latitude)) p.floatField('latitude', d.latitude!);
-        if (isNum(d.longitude)) p.floatField('longitude', d.longitude!);
-        if (isNum(d.height)) p.floatField('height', d.height!);
-        if (isNum(d.altitude)) p.floatField('altitude', d.altitude!);
-        if (isNum(d.v_hor)) p.floatField('v_hor', d.v_hor!);
-        if (isNum(d.v_up)) p.floatField('v_up', d.v_up!);
-        if (d.uav_type) p.stringField('uav_type', d.uav_type);
-        if (isNum(d.app_lat)) p.floatField('app_lat', d.app_lat!);
-        if (isNum(d.app_lon)) p.floatField('app_lon', d.app_lon!);
-        if (isNum(d.app_alt)) p.floatField('app_alt', d.app_alt!);
-        if (isNum(d.app_type)) p.intField('app_type', d.app_type!);
-        if (d.reg_code) p.stringField('reg_code', d.reg_code);
-        if (isNum(d.angle)) p.floatField('angle', d.angle!);
-        if (isNum(d.status)) p.intField('status', d.status!);
-        if (isNum(d.sys_type)) p.intField('sys_type', d.sys_type!);
-        if (isNum(d.weight)) p.intField('weight', d.weight!);
-        if (d.has_allowlist !== undefined)
-          p.booleanField('has_allowlist', d.has_allowlist);
-        points.push(p);
-      }
-    }
-    if (this.vesselBuffer.length > 0) {
-      const vessels = this.vesselBuffer.splice(0);
-      for (const v of vessels) {
-        const p = new Point(MEASUREMENT_VESSEL)
-          .tag(TAG_MMSI, v.mmsi)
-          .timestamp(new Date(v.lastUpdatedAt));
-        if (v.name) p.stringField('name', v.name);
-        if (v.callsign) p.stringField('callsign', v.callsign);
-        if (isNum(v.latitude)) p.floatField('latitude', v.latitude!);
-        if (isNum(v.longitude)) p.floatField('longitude', v.longitude!);
-        if (isNum(v.sog)) p.floatField('sog', v.sog!);
-        if (isNum(v.cog)) p.floatField('cog', v.cog!);
-        if (isNum(v.heading)) p.floatField('heading', v.heading!);
-        if (isNum(v.navStatus)) p.intField('nav_status', v.navStatus!);
-        if (isNum(v.shipType)) p.intField('ship_type', v.shipType!);
-        if (v.destination) p.stringField('destination', v.destination);
-        if (isNum(v.draft)) p.floatField('draft', v.draft!);
-        if (isNum(v.length)) p.floatField('length', v.length!);
-        if (isNum(v.width)) p.floatField('width', v.width!);
-        points.push(p);
-      }
+    for (const { spec, state } of entries) {
+      points.push(spec.buildPoint(state));
     }
     try {
       this.writeApi.writePoints(points);
@@ -294,6 +248,11 @@ export class FlightsService implements OnModuleInit, OnModuleDestroy {
         `Batch flush failed (${points.length} points): ${(err as Error).message}`,
       );
     }
+  }
+
+  private flightSpec(source: string): SensorFlightsSpec<unknown> | undefined {
+    const src = this.sources.find((s) => s.source === source);
+    return src?.flights as SensorFlightsSpec<unknown> | undefined;
   }
 
   async queryPositions(
@@ -523,10 +482,6 @@ export class FlightsService implements OnModuleInit, OnModuleDestroy {
       });
     });
   }
-}
-
-function isNum(v: number | undefined | null): boolean {
-  return v !== undefined && v !== null && Number.isFinite(v);
 }
 
 function asStr(v: unknown): string | null {

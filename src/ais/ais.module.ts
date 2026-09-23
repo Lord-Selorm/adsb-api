@@ -1,7 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import type { DataSource } from '../common/data-source.interface.js';
+import {
+  VESSEL_SOURCE,
+  type SensorSourceDescriptor,
+} from '../sensors/sensor-source.js';
+import { createVesselSource } from '../sensors/source-meta.js';
 import { AisDecoder } from './ais.decoder.js';
 import { VesselStoreService } from './vessel-store.service.js';
+import type { VesselState } from './ais.types.js';
 import { AisIngressService } from './ais.ingress.service.js';
 import { AisController } from './ais.controller.js';
 import { AIS_TRANSPORT_TOKEN } from './ais.transport.token.js';
@@ -71,7 +78,21 @@ import { AisUdpTransport } from './transports/ais-udp.transport.js';
         });
       },
     },
+    {
+      provide: VESSEL_SOURCE,
+      inject: [VesselStoreService, AIS_TRANSPORT_TOKEN],
+      useFactory: (
+        store: VesselStoreService,
+        transport: DataSource,
+      ): SensorSourceDescriptor<VesselState> =>
+        createVesselSource(store, transport),
+    },
   ],
-  exports: [VesselStoreService, AisIngressService, AIS_TRANSPORT_TOKEN],
+  exports: [
+    VesselStoreService,
+    AisIngressService,
+    AIS_TRANSPORT_TOKEN,
+    VESSEL_SOURCE,
+  ],
 })
 export class AisModule {}

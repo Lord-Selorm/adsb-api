@@ -1,50 +1,38 @@
-import { Controller, Get, Inject, Optional } from '@nestjs/common';
+import { Controller, Get, Inject } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ModeSDecoder } from '../decode/mode-s.decoder.js';
-import type { DataSource } from '../common/data-source.interface.js';
-import { TRANSPORT_TOKEN } from '../ingress/transport.token.js';
-import { RID_TRANSPORT_TOKEN } from '../rid/rid.transport.token.js';
-import { AIS_TRANSPORT_TOKEN } from '../ais/ais.transport.token.js';
-import { TrackStoreService } from '../tracks/track-store.service.js';
+import {
+  SENSOR_SOURCES,
+  type SensorSourceDescriptor,
+} from '../sensors/sensor-source.js';
 import { HealthStatusDto } from './health.dto.js';
 
 @ApiTags('health')
 @Controller('health')
 export class HealthController {
   constructor(
-    private readonly tracks: TrackStoreService,
     private readonly decoder: ModeSDecoder,
-    @Inject(TRANSPORT_TOKEN) private readonly transport: DataSource,
-    @Inject(RID_TRANSPORT_TOKEN) private readonly ridTransport: DataSource,
-    @Optional()
-    @Inject(AIS_TRANSPORT_TOKEN)
-    private readonly aisTransport?: DataSource,
+    @Inject(SENSOR_SOURCES)
+    private readonly sources: Array<SensorSourceDescriptor<unknown>>,
   ) {}
 
   @Get()
   @ApiOperation({ summary: 'Liveness + ingress/feed status' })
   @ApiOkResponse({ type: HealthStatusDto, description: 'Service health' })
   status(): HealthStatusDto {
-    return {
+    const health: Record<string, unknown> = {
       status: 'ok',
       uptimeSeconds: process.uptime(),
-      source: this.transport.kind,
-      trackedAircraft: this.tracks.countAircraft,
       malformedMessageCount: this.decoder.getMalformedCount(),
-      secondsSinceLastMessage:
-        Math.max(0, Date.now() - this.transport.getLastMessageAt()) / 1000,
-      connectionStatus: this.transport.getConnectionStatus(),
-      ridSource: this.ridTransport.kind,
-      ridConnectionStatus: this.ridTransport.getConnectionStatus(),
-      ridSecondsSinceLastMessage:
-        Math.max(0, Date.now() - this.ridTransport.getLastMessageAt()) / 1000,
-      trackedDrones: this.tracks.countDrones,
-      aisSource: this.aisTransport?.kind,
-      aisConnectionStatus: this.aisTransport?.getConnectionStatus(),
-      aisSecondsSinceLastMessage: this.aisTransport
-        ? Math.max(0, Date.now() - this.aisTransport.getLastMessageAt()) / 1000
-        : undefined,
-      trackedVessels: this.tracks.countVessels,
     };
+    for (const src of this.sources) {
+      const h = src.health;
+      health[h.sourceField] = src.transport.kind;
+      health[h.connectionStatusField] = src.transport.getConnectionStatus();
+      health[h.secondsSinceLastMessageField] =
+        Math.max(0, Date.now() - src.transport.getLastMessageAt()) / 1000;
+      health[h.trackedCountField] = src.store.count;
+    }
+    return health as unknown as HealthStatusDto;
   }
 }

@@ -60,7 +60,7 @@ describe('FlightsService', () => {
     };
     // Not enabled -> drone enqueue no-ops, no throw.
     expect(() => svc.enqueueDrone(state)).not.toThrow();
-    expect(svc['droneBuffer'].length).toBe(0);
+    expect(svc['pending'].length).toBe(0);
   });
 
   it('returns 0 drone rows while persistence is disabled', async () => {

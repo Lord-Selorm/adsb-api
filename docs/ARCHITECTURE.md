@@ -78,12 +78,18 @@ src/
 │   ├── vessel-store.service.ts     In-memory per-MMSI vessel track.
 │   └── transports/            ais-serial / ais-tcp / ais-udp + ais-mock (sim).
 │
+├── sensors/                   Sensor registry — drives tracks/health/flights.
+│   ├── sensors.module.ts      Aggregates every sensor descriptor (SENSOR_SOURCES).
+│   ├── sensor-source.ts       Sensor source tokens + descriptor type.
+│   └── source-meta.ts         One descriptor factory per sensor.
+│
 ├── tracks/                    The combined live view (planes + drones + vessels).
-│   ├── track-store.service.ts Merges aircraft + drone + vessel stores into one feed.
+│   ├── track-store.service.ts Merges registered stores into one feed.
 │   ├── tracks.controller.ts   GET /api/tracks.
 │   └── tracks.gateway.ts      WebSocket (Socket.IO) live stream.
 │
 ├── flights/                   History persistence (needs INFLUX_* settings).
+│   ├── flights.constants.ts   Measurement/tag column names (single source).
 │   ├── flights.service.ts     Buffers updates → batch-writes to InfluxDB.
 │   └── flights.controller.ts  /api/flights/* (aircraft + drone + vessel history).
 │
@@ -127,29 +133,38 @@ interface DataSource {
   token** (`TRANSPORT_TOKEN`, `RID_TRANSPORT_TOKEN`, `AIS_TRANSPORT_TOKEN`) and
   hands it to that sensor's ingress service.
 
-> **Honest scope of adding a new sensor (e.g. weather, radar, second RID
-> vendor).** The capture half is genuinely plug-and-play: implement
-> `DataSource`, pick it via a `useFactory` in the module, decode into a store.
-> BUT the unified view, health, history and API do NOT update themselves. Today
-> you must also, by hand:
+> **Adding a new sensor (e.g. weather, radar, second RID vendor) is now a
+> captured pattern.** Every sensor registers one **descriptor** in
+> `src/sensors/source-meta.ts` (its store, transport, unified-track mapping,
+> health response fields, InfluxDB measurement/tag/point builder) and exposes it
+> under its own token (`AIRCRAFT_SOURCE` / `DRONE_SOURCE` / `VESSEL_SOURCE`) in
+> its module:
+>
+> ```ts
+> { provide: MY_SOURCE, inject: [MyStore, MY_TRANSPORT_TOKEN],
+>   useFactory: (store, transport) => createMySource(store, transport) }
+> ```
+>
+> `SensorsModule` aggregates every sensor token into one `SENSOR_SOURCES`
+> array; the merged feed (`src/tracks/track-store.service.ts`), health
+> (`src/health/health.controller.ts`) and history persistence
+> (`src/flights/flights.service.ts` + `flights.module.ts`) all **loop that
+> list** — they have no per-sensor branches left. What a new sensor still owns
+> by hand, beside its folder:
 >
 > 1. `src/common/data-source.interface.ts` — extend the `DataSourceKind` union.
-> 2. `src/tracks/` — add the store to the merged feed: union, constructor
->    injection, event wiring, a mapper, `getAll()`/`get()` branches, a count
->    getter; plus `tracks.controller.ts`, `tracks.gateway.ts`, `tracks.dto.ts`.
-> 3. `src/health/` — import the module + add fields in `health.controller.ts`
->    and `health.dto.ts`.
-> 4. `src/flights/` — new measurement + tag + buffer + enqueue + point builder
->    + query methods in `flights.service.ts`, endpoints in
->    `flights.controller.ts`, DTOs in `flights.dto.ts`, subscription in
->    `flights.module.ts`.
-> 5. Tests — `src/tracks/track-store.service.spec.ts` and
+> 2. `src/tracks/track-store.service.ts` — extend the `TrackSource` union (force
+>    `tracks.dto.ts` + `tracks.gateway.ts` to accept the new source).
+> 3. `src/sensors/source-meta.ts` — the descriptor factory (toTrack + health
+>    field names + point builder from `flights.constants.ts`).
+> 4. `src/flights/flights.service.ts` + `flights.dto.ts` + `flights.controller.ts`
+>    — typed query methods + DTOs + endpoints for the new entity type.
+> 5. `src/health/health.dto.ts` — the new health response fields.
+> 6. Tests — `src/tracks/track-store.service.spec.ts` and
 >    `test/app.e2e-spec.ts` hardcode the source set and must be updated.
 >
-> That is ~20 files. The pattern is **convention, not enforcement** — nothing
-> but discipline stops you forgetting steps 2–5. This is the known weakness of
-> the current design; a sensor **registry** that drives tracks/health/flights
-> from a single list is the intended fix (see "Adding a sensor" below).
+> That is down from ~20 files to ~6, and the plumbing files (wiring, merging,
+> health, subscription, buffering) no longer need touching.
 
 ---
 
@@ -164,10 +179,10 @@ interface DataSource {
 | Change how the URM-02 connects                     | `src/rid/transports/rid-udp.transport.ts`      |
 | Add a fake drone or plane for testing              | `src/rid/transports/rid-mock.transport.ts` / `src/ingress/transports/mock.transport.ts` |
 | Add fields to the live feed (`/api/tracks`)        | `src/tracks/` + the store of that sensor       |
-| Change what `/api/health` reports                  | `src/health/health.controller.ts`              |
+| Change what `/api/health` reports                  | `src/sensors/source-meta.ts` (health specs)   |
 | Change database tables / queries                   | `src/flights/flights.service.ts`             |
 | Change CORS or the `/api` prefix                   | `src/bootstrap.ts`                             |
-| Add a health field for a new sensor                | Implement `DataSource` + register the module in `src/health/health.module.ts`, then add fields in `health.controller.ts` + `health.dto.ts` |
+| Register a new type of sensor                      | `src/sensors/source-meta.ts` + the sensor's module (own source token) |
 
 ---
 
