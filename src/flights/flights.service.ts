@@ -121,7 +121,7 @@ function summaryFlux(
     `  |> filter(fn: (r) => r._measurement == "${measurement}")`,
     `  |> group(columns: ["${tag}"])`,
     `  |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")`,
-    `  |> reduce(identity: {points: 0, first: 0, last: 0}, fn: (r, accumulator) => {`,
+    `  |> reduce(identity: {points: 0, first: uint(v: 0), last: uint(v: 0)}, fn: (r, accumulator) => {`,
     `      t = uint(v: r._time)`,
     `      return {points: accumulator.points + 1, first: if accumulator.points == 0 then t else accumulator.first, last: t}`,
     `    })`,
